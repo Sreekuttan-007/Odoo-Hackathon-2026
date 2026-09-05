@@ -89,3 +89,38 @@
   never accepted as input.
 - Per-line `derived_hours` is computed the same way:
   `(end_time - start_time - break_minutes) / 60`.
+- Employee responses also include `attendance_count` (real, computed from
+  stored Attendance records).
+
+## Attendance
+- `POST /api/attendance/check-in` — self-service; resolves the employee from
+  the authenticated user's `employee_id` (never a client-supplied id).
+  `409 ALREADY_CHECKED_IN` if an open session exists (any date — catches a
+  stale missing-checkout); `409 ALREADY_RECORDED_TODAY` if today's record
+  already exists (one record per employee per company-timezone day).
+- `POST /api/attendance/check-out` — self-service. `409 NO_OPEN_SESSION` if
+  there's nothing to check out of.
+- `GET /api/attendance/current` — `{checked_in, attendance}` for the quick
+  widget. `attendance` is `null` when not checked in. The frontend timer is
+  display-only; this endpoint (backed by the persisted `check_in`) is the
+  source of truth on reload.
+- `GET /api/attendance?employee_id=&on_date=&date_from=&date_to=&status=`
+  — `EMPLOYEE`-role callers are always scoped to their own records
+  regardless of `employee_id`; HR-capable roles may pass `employee_id` to
+  filter, or omit it to see everyone. `status` filters on the *derived*
+  status (`ACTIVE`/`MISSING_CHECKOUT`/`COMPLETED`).
+- `GET /api/attendance/{id}` — `403` if the caller is neither HR-capable nor
+  the record's own employee.
+- `PATCH /api/attendance/{id}` — HR-capable only (correction). Body:
+  `check_in?, check_out?, notes?`. Sets `corrected_by_user_id` to the acting
+  user. Rejects `check_out < check_in` (`422`, schema-level) and any edit
+  that would overlap another Attendance record for the same employee
+  (`409 ATTENDANCE_OVERLAP`).
+- `worked_minutes`, `overtime_minutes`, and `status` are always derived from
+  `check_in`/`check_out`/the employee's Working Schedule on every read —
+  never persisted, never independently editable.
+- `overtime_minutes` is `null` (not `0`) when the employee has no Working
+  Schedule, or the schedule has no line for that weekday, or the session is
+  still open — it is never faked.
+- All timestamps are UTC. "Today" and each record's `attendance_date` are
+  computed in the company timezone (`Asia/Kolkata`), not UTC midnight.

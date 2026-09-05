@@ -15,6 +15,8 @@
 /working-schedules/:scheduleId
 
 /attendance
+/attendance?employee_id=:id
+/attendance/:attendanceId
 
 /time-off/requests
 /time-off/allocations

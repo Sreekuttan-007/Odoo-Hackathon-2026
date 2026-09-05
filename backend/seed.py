@@ -1,4 +1,4 @@
-from datetime import date, time
+from datetime import date, datetime, time, timedelta, timezone
 from sqlalchemy.orm import Session
 from app.db.database import SessionLocal, engine
 from app.models.user import User, Role, AccountStatus
@@ -7,9 +7,10 @@ from app.models.department import Department
 from app.models.job_position import JobPosition
 from app.models.working_schedule import WorkingSchedule, WorkingScheduleLine, ScheduleStatus, DayOfWeek
 from app.models.contract import Contract
+from app.models.attendance import Attendance
 from app.core.security import get_password_hash
 from app.db.base import Base
-from app.services import contract_rules
+from app.services import contract_rules, attendance_rules
 
 
 def seed_db():
@@ -137,6 +138,40 @@ def seed_db():
     user_staff = User(employee_id=emp_staff.id, work_email=emp_staff.work_email, role=Role.EMPLOYEE, hashed_password=get_password_hash("employee123"))
 
     db.add_all([user_admin, user_hr, user_payroll, user_staff])
+    db.commit()
+
+    # --- Attendance ---
+    # Dave (the EMPLOYEE-role demo login) has a clean, completed record from
+    # yesterday and NO open session, so the manual demo's live Check In /
+    # Check Out flow (docs/PHASE_LOG.md Phase 3) works immediately.
+    company_tz = attendance_rules.COMPANY_TZ
+    yesterday = attendance_rules.today_in_company_tz() - timedelta(days=1)
+
+    def _at(day, hour, minute):
+        return datetime(day.year, day.month, day.day, hour, minute, tzinfo=company_tz).astimezone(timezone.utc)
+
+    dave_yesterday = Attendance(
+        employee_id=emp_staff.id, attendance_date=yesterday,
+        check_in=_at(yesterday, 9, 2), check_out=_at(yesterday, 18, 5),
+    )
+
+    # Aarav has a normal completed day two days ago, plus an OPEN session
+    # from three days ago that was never checked out — the deliberate
+    # "Missing Checkout" example HR corrects during the failure demo
+    # (docs/PHASE_LOG.md Phase 3, section 41). Aarav has no login, so this
+    # open session never blocks anyone's live check-in.
+    two_days_ago = attendance_rules.today_in_company_tz() - timedelta(days=2)
+    three_days_ago = attendance_rules.today_in_company_tz() - timedelta(days=3)
+    aarav_completed = Attendance(
+        employee_id=emp_aarav.id, attendance_date=two_days_ago,
+        check_in=_at(two_days_ago, 9, 10), check_out=_at(two_days_ago, 18, 0),
+    )
+    aarav_missing_checkout = Attendance(
+        employee_id=emp_aarav.id, attendance_date=three_days_ago,
+        check_in=_at(three_days_ago, 9, 5), check_out=None,
+    )
+
+    db.add_all([dave_yesterday, aarav_completed, aarav_missing_checkout])
     db.commit()
 
     print("Seeding complete.")

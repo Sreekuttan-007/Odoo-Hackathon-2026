@@ -5,3 +5,4 @@ from app.models.working_schedule import WorkingSchedule, WorkingScheduleLine
 from app.models.employee import Employee
 from app.models.contract import Contract
 from app.models.user import User
+from app.models.attendance import Attendance

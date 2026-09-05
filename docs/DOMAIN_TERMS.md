@@ -104,3 +104,45 @@ Contract carries an optional `salary_structure_note` free-text field as a
 placeholder. No `SalaryStructure` model exists yet — building one now would
 mean fabricating payroll configuration data ahead of that phase. The
 relationship is deferred until the Salary Structure module is built.
+
+## Working Schedule vs. Attendance (Phase 3)
+**Working Schedule = expected time. Attendance = actual time.** Attendance
+never mutates Working Schedule; it only reads an employee's schedule to
+compute overtime for a given day.
+
+## Attendance Model Decisions
+- **One record per employee per company-timezone day** (`Asia/Kolkata`), not
+  a multi-shift model. This was chosen for MVP simplicity — see
+  `app/services/attendance_rules.py`.
+- **Session state is derived, not stored**: `check_in` present + `check_out`
+  null → `ACTIVE` (if today) or `MISSING_CHECKOUT` (if a past date — a stale
+  unclosed session); both present → `COMPLETED`. There is no separate
+  `status` column.
+- **Check-in blocking**: rejected if the employee has *any* open session
+  (any date) or already has a record for today. This makes the
+  one-record-per-day rule and the stale-missing-checkout case both
+  enforceable with a single rule.
+- **Timezone policy**: all timestamps are stored in UTC
+  (`DateTime(timezone=True)`); "today" and `attendance_date` are always
+  computed by converting to `Asia/Kolkata` first, never compared as naive
+  UTC-midnight dates. SQLite drops tzinfo on round-trip, so every timestamp
+  read back from the database is re-normalized to UTC (`as_utc()`) before
+  any comparison — otherwise naive/aware comparisons raise at runtime.
+- **Overtime** is implemented (not deferred): for a completed record,
+  `overtime = max(0, worked_minutes - expected_minutes)` where
+  `expected_minutes` comes from the employee's Working Schedule line
+  matching that day's weekday. Returns `null` — never `0` — when the
+  employee has no schedule, the schedule has no line for that weekday, or
+  the session is still open. Never converted to salary; that's a later
+  Payroll concern.
+- **Absence** is not persisted this phase. Attendance records represent
+  actual attendance events only; absence should be derived later in
+  reporting against Working Schedule, not backfilled as empty rows here.
+- **Corrections**: HR-capable roles only. A correction can change
+  `check_in`/`check_out`/`notes`; `worked_minutes`/`overtime_minutes` are
+  always recomputed from the (possibly corrected) timestamps, never
+  independently edited. `corrected_by_user_id` records who made the last
+  correction (single mutable record, not a full correction history table —
+  an MVP simplification). A correction that would overlap another
+  Attendance record for the same employee is rejected
+  (`409 ATTENDANCE_OVERLAP`).

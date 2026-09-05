@@ -13,3 +13,24 @@ export function formatDate(iso: string): string {
 export function formatPeriod(start: string, end: string | null): string {
   return `${formatDate(start)} — ${end ? formatDate(end) : 'Present'}`;
 }
+
+const COMPANY_TIME_ZONE = 'Asia/Kolkata';
+
+export function formatTime(iso: string): string {
+  return new Date(iso).toLocaleTimeString('en-IN', {
+    hour: '2-digit', minute: '2-digit', timeZone: COMPANY_TIME_ZONE,
+  });
+}
+
+export function formatDateTime(iso: string): string {
+  return new Date(iso).toLocaleString('en-IN', {
+    day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit', timeZone: COMPANY_TIME_ZONE,
+  });
+}
+
+export function formatMinutes(minutes: number | null): string {
+  if (minutes === null) return '—';
+  const h = Math.floor(minutes / 60);
+  const m = minutes % 60;
+  return `${h}h ${String(m).padStart(2, '0')}m`;
+}

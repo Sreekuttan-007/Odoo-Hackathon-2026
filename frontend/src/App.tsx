@@ -11,6 +11,8 @@ import { ContractDetail } from './pages/ContractDetail';
 import { Departments } from './pages/Departments';
 import { WorkingSchedules } from './pages/WorkingSchedules';
 import { WorkingScheduleForm } from './pages/WorkingScheduleForm';
+import { AttendancePage } from './pages/Attendance';
+import { AttendanceDetail } from './pages/AttendanceDetail';
 
 // Placeholder Pages
 const Placeholder = ({ title }: { title: string }) => (
@@ -41,7 +43,8 @@ function App() {
             <Route path="working-schedules/new" element={<WorkingScheduleForm />} />
             <Route path="working-schedules/:scheduleId" element={<WorkingScheduleForm />} />
             
-            <Route path="attendance" element={<Placeholder title="Attendance" />} />
+            <Route path="attendance" element={<AttendancePage />} />
+            <Route path="attendance/:attendanceId" element={<AttendanceDetail />} />
             
             <Route path="time-off">
               <Route path="requests" element={<Placeholder title="Time Off Requests" />} />

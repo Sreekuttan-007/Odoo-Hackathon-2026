@@ -98,7 +98,14 @@ export function EmployeeDetail() {
             <span className="text-sm font-semibold text-gray-900">{employee.contracts_count}</span>
             <span className="text-xs text-gray-500">Contracts</span>
           </Link>
-          <SmartActionPlaceholder icon={CalendarClock} label="Attendance" />
+          <Link
+            to={`/attendance?employee_id=${employee.id}`}
+            className="flex flex-col items-center justify-center gap-1 rounded-lg border border-gray-200 py-3 hover:border-brand-300 hover:bg-brand-50/50 transition-colors duration-150"
+          >
+            <CalendarClock className="w-4 h-4 text-brand-600" />
+            <span className="text-sm font-semibold text-gray-900">{employee.attendance_count}</span>
+            <span className="text-xs text-gray-500">Attendance</span>
+          </Link>
           <SmartActionPlaceholder icon={PlaneTakeoff} label="Time Off" />
           <SmartActionPlaceholder icon={FileText} label="Allocations" />
         </div>

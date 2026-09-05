@@ -1,5 +1,6 @@
 import { Outlet, NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { AttendanceWidget } from './AttendanceWidget';
 import { LogOut, LayoutDashboard, Users, FileText, Building2, Clock, CalendarCheck, PlaneTakeoff, Wallet, ShieldCheck } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 
@@ -137,6 +138,7 @@ export function AppShell() {
       <div className="flex flex-1 flex-col overflow-hidden">
         <header className="flex h-14 shrink-0 items-center justify-between border-b border-gray-200 bg-white px-6">
           <h2 className="text-[13px] font-medium text-gray-500">{pageTitle}</h2>
+          <AttendanceWidget />
         </header>
 
         <main className="flex-1 overflow-y-auto p-6">

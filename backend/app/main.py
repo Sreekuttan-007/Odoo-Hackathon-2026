@@ -11,6 +11,7 @@ from app.api.job_positions import router as job_positions_router
 from app.api.employees import router as employees_router
 from app.api.contracts import router as contracts_router
 from app.api.working_schedules import router as working_schedules_router
+from app.api.attendance import router as attendance_router
 
 app = FastAPI(
     title="PeoplePay360 API",
@@ -53,6 +54,7 @@ app.include_router(job_positions_router, prefix="/api", tags=["Job Positions"])
 app.include_router(employees_router, prefix="/api", tags=["Employees"])
 app.include_router(contracts_router, prefix="/api", tags=["Contracts"])
 app.include_router(working_schedules_router, prefix="/api", tags=["Working Schedules"])
+app.include_router(attendance_router, prefix="/api", tags=["Attendance"])
 # Registered last: its GET routes duplicate the routers above (which already
 # handle nested working_schedule serialization correctly), so this only
 # matters for any path that isn't already covered above.

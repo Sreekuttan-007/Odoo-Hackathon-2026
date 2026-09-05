@@ -53,6 +53,7 @@ class EmployeeResponse(EmployeeBase):
     manager: Optional[EmployeeMinimal] = None
     working_schedule: Optional[WorkingScheduleSummary] = None
     contracts_count: int = 0
+    attendance_count: int = 0
     created_at: datetime
     updated_at: Optional[datetime] = None
 

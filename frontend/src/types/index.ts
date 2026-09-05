@@ -13,6 +13,8 @@ export type ScheduleStatus = 'ACTIVE' | 'INACTIVE';
 
 export type ContractStatus = 'RUNNING' | 'UPCOMING' | 'EXPIRED';
 
+export type AttendanceStatus = 'ACTIVE' | 'MISSING_CHECKOUT' | 'COMPLETED';
+
 export type DayOfWeek =
   | 'MONDAY'
   | 'TUESDAY'
@@ -95,8 +97,29 @@ export interface Employee {
   manager: EmployeeMinimal | null;
   working_schedule: WorkingScheduleSummary | null;
   contracts_count: number;
+  attendance_count: number;
   created_at: string;
   updated_at: string | null;
+}
+
+export interface Attendance {
+  id: number;
+  employee: EmployeeMinimal;
+  attendance_date: string;
+  check_in: string;
+  check_out: string | null;
+  worked_minutes: number | null;
+  overtime_minutes: number | null;
+  status: AttendanceStatus;
+  notes: string | null;
+  corrected_by_name: string | null;
+  created_at: string;
+  updated_at: string | null;
+}
+
+export interface CurrentAttendance {
+  checked_in: boolean;
+  attendance: Attendance | null;
 }
 
 export interface Contract {
