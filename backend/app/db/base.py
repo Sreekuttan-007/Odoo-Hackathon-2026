@@ -1,3 +1,3 @@
 from app.db.database import Base
-# Import all models here so Alembic can discover them
-# from app.models.user import User
+from app.models.employee import Employee
+from app.models.user import User

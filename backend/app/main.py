@@ -3,6 +3,9 @@ from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
 
+from app.api.auth import router as auth_router
+from app.api.admin_users import router as admin_users_router
+
 app = FastAPI(
     title="PeoplePay360 API",
     description="Backend API for PeoplePay360 HR & Payroll system",
@@ -36,3 +39,6 @@ async def global_exception_handler(request: Request, exc: Exception):
 @app.get("/api/health")
 def health_check():
     return {"status": "ok"}
+
+app.include_router(auth_router, prefix="/api/auth", tags=["Authentication"])
+app.include_router(admin_users_router, prefix="/api/admin", tags=["Admin Users"])

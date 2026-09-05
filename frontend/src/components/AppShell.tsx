@@ -1,6 +1,16 @@
-import { Outlet, NavLink } from 'react-router-dom';
+import { Outlet, NavLink, useNavigate } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
+import { LogOut } from 'lucide-react';
 
 export function AppShell() {
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    logout();
+    navigate('/login');
+  };
+
   const activeClass = "bg-blue-800 text-white";
   const inactiveClass = "text-blue-100 hover:bg-blue-800 hover:text-white";
 
@@ -39,19 +49,28 @@ export function AppShell() {
           <NavLink to="/payroll/salary-structures" className={({isActive}) => `px-3 py-2 rounded-md text-sm font-medium ${isActive ? activeClass : inactiveClass}`}>Salary Structures</NavLink>
           <NavLink to="/payroll/salary-rules" className={({isActive}) => `px-3 py-2 rounded-md text-sm font-medium ${isActive ? activeClass : inactiveClass}`}>Salary Rules</NavLink>
           
-          <div className="pt-4 pb-1">
-            <p className="px-3 text-xs font-semibold text-blue-300 uppercase tracking-wider">Administration</p>
-          </div>
-          <NavLink to="/admin/users" className={({isActive}) => `px-3 py-2 rounded-md text-sm font-medium ${isActive ? activeClass : inactiveClass}`}>Users</NavLink>
+          {user?.role === 'ADMIN' && (
+            <>
+              <div className="pt-4 pb-1">
+                <p className="px-3 text-xs font-semibold text-blue-300 uppercase tracking-wider">Administration</p>
+              </div>
+              <NavLink to="/admin/users" className={({isActive}) => `px-3 py-2 rounded-md text-sm font-medium ${isActive ? activeClass : inactiveClass}`}>Users</NavLink>
+            </>
+          )}
         </nav>
 
-        {/* User profile placeholder */}
+        {/* User profile */}
         <div className="flex shrink-0 border-t border-blue-800 p-4">
-          <div className="flex items-center">
-            <div className="ml-3">
-              <p className="text-sm font-medium text-white">Mock User</p>
-              <p className="text-xs font-medium text-blue-200">Admin</p>
+          <div className="flex w-full items-center justify-between">
+            <div className="flex items-center truncate mr-2">
+              <div className="ml-3 truncate">
+                <p className="text-sm font-medium text-white truncate">{user?.employee?.first_name} {user?.employee?.last_name}</p>
+                <p className="text-xs font-medium text-blue-200 truncate">{user?.role}</p>
+              </div>
             </div>
+            <button onClick={handleLogout} className="text-blue-200 hover:text-white p-2">
+              <LogOut className="w-5 h-5" />
+            </button>
           </div>
         </div>
       </aside>
