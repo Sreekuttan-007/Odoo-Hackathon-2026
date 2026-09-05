@@ -49,20 +49,19 @@ def generate_payslip_pdf(payslip: Payslip) -> bytes:
     elements.append(info_table)
 
     elements.append(Paragraph("Salary Computation", _section_style))
-    line_rows = [["Rule", "Category", "Base / Rate", "Amount"]]
+    line_rows = [["Rule", "Category", "Amount"]]
     for line in sorted(payslip.lines, key=lambda l: l.sequence_snapshot):
         line_rows.append([
             f"{line.rule_name_snapshot} ({line.rule_code_snapshot})",
             line.category_snapshot.value.title(),
-            line.base_description_snapshot or "-",
             _money(line.amount),
         ])
-    comp_table = Table(line_rows, colWidths=[55 * mm, 30 * mm, 55 * mm, 35 * mm])
+    comp_table = Table(line_rows, colWidths=[85 * mm, 55 * mm, 35 * mm])
     comp_table.setStyle(TableStyle([
         ("FONTSIZE", (0, 0), (-1, -1), 9),
         ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
         ("BACKGROUND", (0, 0), (-1, 0), colors.whitesmoke),
-        ("ALIGN", (3, 0), (3, -1), "RIGHT"),
+        ("ALIGN", (2, 0), (2, -1), "RIGHT"),
         ("GRID", (0, 0), (-1, -1), 0.4, colors.lightgrey),
         ("BOTTOMPADDING", (0, 0), (-1, -1), 4),
         ("TOPPADDING", (0, 0), (-1, -1), 4),

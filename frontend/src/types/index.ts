@@ -43,6 +43,7 @@ export interface Department {
 export interface JobPosition {
   id: number;
   title: string;
+  level: number | null;
   created_at: string;
   updated_at: string | null;
 }

@@ -5,6 +5,7 @@ from datetime import datetime
 
 class JobPositionBase(BaseModel):
     title: str
+    level: Optional[int] = None
 
 
 class JobPositionCreate(JobPositionBase):
@@ -13,6 +14,7 @@ class JobPositionCreate(JobPositionBase):
 
 class JobPositionUpdate(BaseModel):
     title: Optional[str] = None
+    level: Optional[int] = None
 
 
 class JobPositionResponse(JobPositionBase):

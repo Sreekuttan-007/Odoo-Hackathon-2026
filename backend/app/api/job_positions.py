@@ -29,7 +29,7 @@ def create_job_position(
     db: Session = Depends(get_db),
     current_hr: User = Depends(get_current_hr),
 ):
-    job_position = JobPosition(title=payload.title)
+    job_position = JobPosition(title=payload.title, level=payload.level)
     db.add(job_position)
     try:
         db.commit()
@@ -52,6 +52,8 @@ def update_job_position(
         raise HTTPException(404, detail={"error": {"code": "NOT_FOUND", "message": "Job position not found."}})
     if payload.title is not None:
         job_position.title = payload.title
+    if payload.level is not None:
+        job_position.level = payload.level
     try:
         db.commit()
     except IntegrityError:

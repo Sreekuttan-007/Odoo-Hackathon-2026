@@ -40,7 +40,7 @@ export function PayslipDetail() {
 
   if (loading) {
     return (
-      <div className="space-y-5 max-w-3xl">
+      <div className="space-y-5 max-w-4xl">
         <div className="h-4 w-20 bg-gray-100 rounded animate-pulse" />
         <SkeletonDetail />
       </div>
@@ -57,7 +57,7 @@ export function PayslipDetail() {
   }
 
   return (
-    <div className="space-y-5 max-w-3xl">
+    <div className="space-y-5 max-w-4xl">
       <button onClick={() => navigate(-1)} className="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-700 transition-colors">
         <ArrowLeft className="w-3.5 h-3.5" /> Back
       </button>
@@ -101,28 +101,26 @@ export function PayslipDetail() {
         {payslip.lines.length === 0 ? (
           <div className="p-8 text-center text-sm text-gray-500">No computation available yet.</div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="min-w-full">
-              <thead>
-                <tr className="border-b border-gray-100">
-                  <th className="px-6 py-2.5 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Rule</th>
-                  <th className="px-6 py-2.5 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Category</th>
-                  <th className="px-6 py-2.5 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Base / Rate</th>
-                  <th className="px-6 py-2.5 text-right text-xs font-medium text-gray-400 uppercase tracking-wider">Amount</th>
+          <table className="w-full table-fixed">
+            <thead>
+              <tr className="border-b border-gray-100">
+                <th className="px-6 py-2.5 w-[40%] text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Rule</th>
+                <th className="px-6 py-2.5 w-[15%] text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Category</th>
+                <th className="px-6 py-2.5 w-[30%] text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Base / Rate</th>
+                <th className="px-6 py-2.5 w-[15%] text-right text-xs font-medium text-gray-400 uppercase tracking-wider">Amount</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-50">
+              {payslip.lines.map(l => (
+                <tr key={l.id}>
+                  <td className="px-6 py-3 text-sm font-medium text-gray-900 break-words">{l.rule_name_snapshot} <span className="text-gray-400 font-mono text-xs">({l.rule_code_snapshot})</span></td>
+                  <td className="px-6 py-3 text-sm text-gray-600 capitalize">{l.category_snapshot.toLowerCase()}</td>
+                  <td className="px-6 py-3 text-sm text-gray-500 break-words">{l.base_description_snapshot || '—'}</td>
+                  <td className="px-6 py-3 whitespace-nowrap text-sm text-right font-medium text-gray-900">{formatMoney(l.amount)}</td>
                 </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-50">
-                {payslip.lines.map(l => (
-                  <tr key={l.id}>
-                    <td className="px-6 py-3 whitespace-nowrap text-sm font-medium text-gray-900">{l.rule_name_snapshot} <span className="text-gray-400 font-mono text-xs">({l.rule_code_snapshot})</span></td>
-                    <td className="px-6 py-3 whitespace-nowrap text-sm text-gray-600 capitalize">{l.category_snapshot.toLowerCase()}</td>
-                    <td className="px-6 py-3 whitespace-nowrap text-sm text-gray-500">{l.base_description_snapshot || '—'}</td>
-                    <td className="px-6 py-3 whitespace-nowrap text-sm text-right font-medium text-gray-900">{formatMoney(l.amount)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+              ))}
+            </tbody>
+          </table>
         )}
 
         <div className="border-t border-gray-100 px-6 py-4 space-y-2">

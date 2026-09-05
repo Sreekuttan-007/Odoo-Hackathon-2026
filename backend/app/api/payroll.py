@@ -437,5 +437,5 @@ def get_payslip_pdf(payslip_id: int, db: Session = Depends(get_db), current_user
         raise HTTPException(404, detail={"error": {"code": "NOT_FOUND", "message": "Payslip not found."}})
     _assert_payslip_access(current_user, payslip)
     pdf_bytes = payslip_pdf.generate_payslip_pdf(payslip)
-    filename = f"payslip-{payslip.employee.employee_code or payslip.employee_id}-{payslip.period_start}.pdf"
+    filename = f"{payslip.employee.employee_code or payslip.employee_id}.pdf"
     return Response(content=pdf_bytes, media_type="application/pdf", headers={"Content-Disposition": f'inline; filename="{filename}"'})

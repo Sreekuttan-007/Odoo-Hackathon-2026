@@ -37,6 +37,7 @@ def _validate_relations(
     working_schedule_id: Optional[int],
     manager_id: Optional[int],
     self_id: Optional[int],
+    effective_job_position_id: Optional[int] = None,
 ) -> None:
     if department_id is not None and not db.query(Department).filter(Department.id == department_id).first():
         raise HTTPException(400, detail={"error": {"code": "NOT_FOUND", "message": "Department not found."}})
@@ -47,8 +48,25 @@ def _validate_relations(
     if manager_id is not None:
         if self_id is not None and manager_id == self_id:
             raise HTTPException(400, detail={"error": {"code": "INVALID_MANAGER", "message": "An employee cannot be their own manager."}})
-        if not db.query(Employee).filter(Employee.id == manager_id).first():
+        manager = db.query(Employee).filter(Employee.id == manager_id).first()
+        if not manager:
             raise HTTPException(400, detail={"error": {"code": "NOT_FOUND", "message": "Manager not found."}})
+        if effective_job_position_id is not None:
+            employee_position = db.query(JobPosition).filter(JobPosition.id == effective_job_position_id).first()
+            manager_position = manager.job_position
+            if (
+                employee_position is not None
+                and employee_position.level is not None
+                and manager_position is not None
+                and manager_position.level is not None
+                and manager_position.level >= employee_position.level
+            ):
+                raise HTTPException(400, detail={
+                    "error": {
+                        "code": "INVALID_MANAGER_HIERARCHY",
+                        "message": f"Manager must hold a job position ranked higher than '{employee_position.title}'.",
+                    }
+                })
 
 
 def _build_response(employee: Employee, contracts_count: int, attendance_count: int = 0, time_off_requests_count: int = 0, include_manager: bool = True) -> EmployeeResponse:
@@ -163,7 +181,8 @@ def create_employee(
     current_hr: User = Depends(get_current_hr),
 ):
     _validate_relations(
-        db, payload.department_id, payload.job_position_id, payload.working_schedule_id, payload.manager_id, self_id=None
+        db, payload.department_id, payload.job_position_id, payload.working_schedule_id, payload.manager_id, self_id=None,
+        effective_job_position_id=payload.job_position_id,
     )
 
     employee = Employee(
@@ -203,6 +222,7 @@ def update_employee(
         data.get("working_schedule_id") if "working_schedule_id" in data else None,
         data.get("manager_id") if "manager_id" in data else None,
         self_id=employee.id,
+        effective_job_position_id=data.get("job_position_id", employee.job_position_id),
     )
 
     for field, value in data.items():
