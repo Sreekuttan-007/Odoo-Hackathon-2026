@@ -7,11 +7,18 @@ as one connected system — not disconnected CRUD pages.
 
 ## Current Status
 
-**Phase 0 (Architecture & Rules) is complete.** No application code exists yet.
-Do not scaffold the frontend/backend, install packages, create migrations, add
-API routes, or build UI components until a human explicitly approves moving to
-Phase 1. If asked to "start building," confirm which phase is being started
-and check it against the phase plan below first.
+**Phase 0 (Architecture & Rules) is complete.** **Phase 1 (Backend
+Foundation) is implemented on branch `feature/backend-foundation`**, not
+merged to `main` — awaiting review. It covers: backend project init, env
+config, Postgres via Prisma, migrations, `Role`/`User`/`Department`/
+`JobPosition`/`Employee` tables, JWT auth (`/auth/login`, `/auth/me`), RBAC
+middleware, Employee/Department/Job Position CRUD, deterministic seed data
+(`backend/prisma/seed.ts`), and a passing test suite (`backend/tests/`,
+run via `npm test` in `backend/`). See `backend/README.md` for setup/run/test
+commands. No payroll logic exists yet (Contracts, Schedules, Attendance, Time
+Off, Salary Structures/Rules, Payruns, Payslips, Dashboard, PDF/email, and the
+Innovation Layer are all still Phase 2+ per the plan below) — do not start
+that work until a human reviews Phase 1 and approves Phase 2.
 
 Full Phase 0 documentation lives in `docs/`:
 - `REQUIREMENTS.md` — problem statement, roles/permission matrix, documented ambiguities

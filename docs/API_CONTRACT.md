@@ -6,13 +6,16 @@ backend change that adds/renames/reshapes an endpoint or an enum value must be
 reflected here in the same change — this file, not the frontend's mock data,
 is the source of truth for shape and vocabulary.
 
-Status: **Planning only — nothing below is implemented yet.** This document
-supersedes `API_PLAN.md`'s endpoint list with concrete request/response
-shapes; `API_PLAN.md` remains the quick-reference index by module.
+Status: **Phase 1 implemented** (Auth, Health, Employees, Departments, Job
+Positions — see §4 and the Change Log). Everything else in this document is
+still planning-only. This document supersedes `API_PLAN.md`'s endpoint list
+with concrete request/response shapes; `API_PLAN.md` remains the
+quick-reference index by module.
 
-All endpoints: `/api/v1/...`, JSON, `Authorization: Bearer <JWT>`. Every
-mutating endpoint re-checks the role server-side regardless of what the
-frontend does or doesn't render (see `REQUIREMENTS.md` permission matrix).
+All endpoints: `/api/...` (no version segment — see Change Log 2026-09-05),
+JSON, `Authorization: Bearer <JWT>`. Every mutating endpoint re-checks the
+role server-side regardless of what the frontend does or doesn't render (see
+`REQUIREMENTS.md` permission matrix).
 
 ---
 
@@ -22,8 +25,9 @@ Both agents use these exact strings. Neither agent invents a synonym.
 
 ```
 UserRole:                  EMPLOYEE | HR_MANAGER | HR_PAYROLL_USER | HR_PAYROLL_MANAGER | ADMIN
-EmployeeActiveStatus:      ACTIVE | INACTIVE
+EmployeeStatus:            ACTIVE | INACTIVE | TERMINATED
 EmployeeType:              FULL_TIME | PART_TIME | CONTRACTOR
+BankDetailsStatus:         MISSING | PROVIDED
 ContractStatus:            DRAFT | ACTIVE | EXPIRED | TERMINATED
 WorkingScheduleType:       FULL_TIME | PART_TIME
 DayOfWeek:                 MON | TUE | WED | THU | FRI | SAT | SUN
@@ -80,7 +84,12 @@ and status-guard logic against exact strings instead of guessing.
 
 ---
 
-## 3. Auth
+## 2a. Health — **implemented (Phase 1)**
+
+### GET /health
+Response 200: `{ "status": "ok" }`. No auth required.
+
+## 3. Auth — **implemented (Phase 1)**
 
 ### POST /auth/login
 Request: `{ "email": "string", "password": "string" }`
@@ -88,39 +97,72 @@ Response 200:
 ```json
 { "token": "jwt", "user": { "id": "uuid", "email": "string", "role": "UserRole", "employeeId": "uuid|null" } }
 ```
-Errors: 401 `INVALID_CREDENTIALS`.
+Errors: `401 INVALID_CREDENTIALS`, `401 INACTIVE_USER`.
 
 ### GET /auth/me
-Response 200: same `user` shape as above. Role: authenticated.
+Response 200: `{ "user": { "id": "uuid", "email": "string", "role": "UserRole", "employeeId": "uuid|null" } }`
+Errors: `401 UNAUTHORIZED` (missing/malformed header), `401 INVALID_TOKEN`, `401 TOKEN_EXPIRED`, `401 INACTIVE_USER`.
+
+Every request past this point re-fetches the user (and role) from the
+database rather than trusting the JWT's claims — a role change or account
+deactivation takes effect on the very next request, not at token expiry.
 
 ---
 
-## 4. Employees
+## 4. Employees — **implemented (Phase 1)**
 
-Standard CRUD shape mirrors the Employee fields in `DATABASE_SCHEMA.md`
-(`employeeNumber, firstName, lastName, email, phone, departmentId, managerId,
-jobPositionId, employeeType, workingScheduleId, bankDetails, activeStatus,
-joinDate`). List supports `?department=&type=&status=&search=`.
+Fields (`employeeCode` — renamed from Phase 0's `employeeNumber`, see Change
+Log): `id, employeeCode, firstName, lastName, email, phone, departmentId,
+jobPositionId, managerId, employeeType, joinDate, bankDetailsStatus, status,
+createdAt, updatedAt`. `workingScheduleId` is intentionally absent —
+WorkingSchedule doesn't exist until Phase 2 (no FK to a non-existent table).
 
-`GET /employees/:id` response additionally nests summary counts for the hub
-(not full sub-lists — those are separate calls):
+### GET /employees
+Query: `search, departmentId, jobPositionId, status, employeeType, page, pageSize`.
+Response 200 — list envelope (§2) with `department`/`jobPosition` nested per row:
 ```json
-{
-  "id": "uuid", "employeeNumber": "EMP-1001", "firstName": "Arjun", "lastName": "Mehta",
-  "department": { "id": "uuid", "name": "Engineering" },
-  "manager": { "id": "uuid", "firstName": "Priya", "lastName": "Sharma" },
-  "jobPosition": { "id": "uuid", "title": "Software Engineer" },
-  "workingSchedule": { "id": "uuid", "name": "Standard 5-Day", "weeklyHours": 37.5 },
-  "activeStatus": "ACTIVE",
-  "hasBankDetails": true,
-  "activeContractId": "uuid|null"
-}
+{ "data": [ { "id": "uuid", "employeeCode": "EMP-1001", "firstName": "Arjun", "department": { "id": "uuid", "name": "Engineering" }, "jobPosition": { "id": "uuid", "title": "Software Engineer" } } ], "total": 9, "page": 1, "pageSize": 25 }
 ```
-Sub-resources: `GET /employees/:id/contracts`, `/attendance`, `/time-off`,
-`/payslips`, `/leave-balance` — each a list envelope of that module's shape.
+Role: `HR_MANAGER+` (`HR_ADMIN_ROLES` — HR_MANAGER, HR_PAYROLL_USER, HR_PAYROLL_MANAGER, ADMIN).
 
-Role: `HR_MANAGER+` for CRUD and any-employee reads; `EMPLOYEE` may read only
-where `:id` resolves to their own linked `employeeId`.
+### GET /employees/:id
+Nests `department`, `jobPosition`, `manager` (not sub-lists — those are
+future separate calls, e.g. `/employees/:id/contracts` once Phase 2 lands).
+Role: `HR_ADMIN_ROLES`, **or** `EMPLOYEE` where `:id` equals their own linked
+`employeeId` (self-read only; any other `:id` → `403 FORBIDDEN`).
+
+### POST /employees, PATCH /employees/:id
+Body: the fields above (PATCH accepts a partial object). Role: `HR_ADMIN_ROLES`.
+Errors: `400 INVALID_DEPARTMENT`, `400 INVALID_JOB_POSITION`,
+`400 INVALID_MANAGER`, `400 SELF_MANAGER_NOT_ALLOWED`,
+`409 DUPLICATE_EMPLOYEE_CODE`, `409 DUPLICATE_EMAIL`,
+`404 EMPLOYEE_NOT_FOUND` (PATCH only).
+
+No hard-delete endpoint — deactivate via `PATCH { "status": "INACTIVE" }` or
+`"TERMINATED"` (see `DATABASE_SCHEMA.md` archival policy).
+
+---
+
+## 4a. Departments — **implemented (Phase 1)**
+
+Fields: `id, name, code, description, isActive, createdAt, updatedAt`.
+
+`GET /departments` → `{ "data": [...] }` (no pagination — small lookup table).
+`GET /departments/:id`, `POST /departments`, `PATCH /departments/:id`.
+Errors: `404 DEPARTMENT_NOT_FOUND`, `409 DUPLICATE_DEPARTMENT` (name or code
+already in use). No hard delete — deactivate via `PATCH { "isActive": false }`.
+Role: `HR_ADMIN_ROLES`.
+
+## 4b. Job Positions — **implemented (Phase 1)**
+
+Fields: `id, title, code, departmentId, description, isActive, createdAt, updatedAt`.
+
+`GET /job-positions?departmentId=` → `{ "data": [...] }`.
+`GET /job-positions/:id`, `POST /job-positions`, `PATCH /job-positions/:id`.
+Errors: `404 JOB_POSITION_NOT_FOUND`, `400 INVALID_DEPARTMENT`,
+`409 DUPLICATE_JOB_POSITION_CODE`. A job position's department is **not**
+cross-validated against its employees' departments (documented simplification,
+Phase 1 spec §28). Role: `HR_ADMIN_ROLES`.
 
 ---
 
@@ -404,6 +446,13 @@ precomputed/cached snapshot table backs these endpoints in MVP. Role:
 ## 14. Admin
 
 Standard CRUD on `/users` — `{ email, role, employeeId, active }`. Role: `ADMIN`.
+**Not implemented in Phase 1** — not in that phase's scope; users are only
+seeded directly for now (see `backend/prisma/seed.ts`).
+
+Note: `Role` is modeled as its own table (`id, name: UserRole, description`),
+not an enum column directly on `User` — a documented refinement of Phase 0's
+original "enum on User" plan, made explicit by the Phase 1 spec's entity
+list. `UserRole`'s canonical string values (§1) are unaffected.
 
 ---
 
@@ -412,6 +461,7 @@ Standard CRUD on `/users` — `{ email, role, employeeId, active }`. Role: `ADMI
 | Date | Change |
 |---|---|
 | 2026-09-05 | Initial contract drafted alongside Phase 0 docs; includes PayTrace/Preflight/Simulator per parallel-development context |
+| 2026-09-05 | Phase 1 implemented: Auth (login/me), Health, Employees, Departments, Job Positions. Breaking changes from the initial draft: base path dropped `/v1` (now `/api/...`); `Employee.employeeNumber` renamed to `employeeCode`; `EmployeeActiveStatus` (ACTIVE\|INACTIVE) replaced by `EmployeeStatus` (ACTIVE\|INACTIVE\|TERMINATED); added `BankDetailsStatus` enum; `Role` is now its own table rather than an enum on `User`. Employee list envelope uses `data` (not `items`) for consistency with §2's common shape. |
 
 Every future change to this file must append a row here so Antigravity can
 tell, at a glance, whether their local copy of the contract is current.

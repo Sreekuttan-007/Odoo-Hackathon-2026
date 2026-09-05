@@ -1,12 +1,27 @@
 # DATABASE SCHEMA (Conceptual ER Design) — PeoplePay360
 
-No migrations are created in Phase 0. This is the schema design that Phase 1+
-will translate into actual migrations (e.g. Prisma schema).
+Phase 1 implemented the `Role`, `User`, `Department`, `JobPosition`, and
+`Employee` tables below (see `backend/prisma/schema.prisma`, the executable
+source of truth for what's actually built). A few fields/enums were refined
+during Phase 1 versus the original Phase 0 draft — each is called out inline
+and in `API_CONTRACT.md`'s change log. Everything below `Employee` in this
+document remains Phase 0 planning, not yet built.
 
 Convention: all primary keys are UUIDs (`id`). All tables get `created_at`,
-`updated_at`. Soft-deactivation via `active` boolean is preferred over hard
-delete for master/config data; transactional data (Contract, Payslip, Payrun)
-uses status enums instead of an `active` flag.
+`updated_at`. Soft-deactivation via `active`/`is_active` boolean is preferred
+over hard delete for master/config data; transactional data (Contract,
+Payslip, Payrun) uses status enums instead of an `active` flag.
+
+## Role — *(implemented; new table, not in the original Phase 0 draft)*
+| Field | Type | Notes |
+|---|---|---|
+| id | uuid | PK |
+| name | enum(EMPLOYEE, HR_MANAGER, HR_PAYROLL_USER, HR_PAYROLL_MANAGER, ADMIN), unique | |
+| description | string, nullable | |
+
+Modeled as its own table rather than an enum column directly on `User` — the
+Phase 1 spec calls it out as a distinct entity with `User.role_id` as an FK.
+The five canonical name values are unchanged from Phase 0.
 
 ## User
 | Field | Type | Notes |
@@ -14,42 +29,47 @@ uses status enums instead of an `active` flag.
 | id | uuid | PK |
 | email | string, unique | login |
 | password_hash | string | |
-| role | enum(EMPLOYEE, HR_MANAGER, HR_PAYROLL_USER, HR_PAYROLL_MANAGER, ADMIN) | |
+| role_id | uuid FK -> Role | *(was a direct enum column in the Phase 0 draft)* |
 | employee_id | uuid FK -> Employee, nullable, unique | optional link |
-| active | boolean | disable login without deleting |
+| is_active | boolean | disable login without deleting |
 
 ## Department
 | Field | Type | Notes |
 |---|---|---|
 | id | uuid | PK |
 | name | string, unique | |
-| active | boolean | |
+| code | string, unique | short code, e.g. "ENG" *(added in Phase 1)* |
+| description | string, nullable | *(added in Phase 1)* |
+| is_active | boolean | |
 
 ## JobPosition
 | Field | Type | Notes |
 |---|---|---|
 | id | uuid | PK |
 | title | string | |
-| active | boolean | |
+| code | string, unique | *(added in Phase 1)* |
+| department_id | uuid FK -> Department | *(added in Phase 1 — missing from the original Phase 0 draft entirely)* |
+| description | string, nullable | *(added in Phase 1)* |
+| is_active | boolean | |
 
 ## Employee
 | Field | Type | Notes |
 |---|---|---|
 | id | uuid | PK |
-| employee_number | string, unique | human-readable code |
+| employee_code | string, unique | human-readable code — *renamed from Phase 0's `employee_number` per the Phase 1 spec* |
 | first_name / last_name | string | |
 | email | string, unique | |
 | phone | string, nullable | |
 | department_id | uuid FK -> Department | |
 | manager_id | uuid FK -> Employee, nullable | self-reference |
 | job_position_id | uuid FK -> JobPosition | |
-| employee_type | enum(FULL_TIME, PART_TIME, CONTRACTOR) | assumption, simplest set |
-| working_schedule_id | uuid FK -> WorkingSchedule | current default schedule |
-| bank_account_number, bank_name, bank_ifsc (or equivalent) | string, nullable | required before Mark Paid for that employee |
-| active_status | enum(ACTIVE, INACTIVE) | |
+| employee_type | enum(FULL_TIME, PART_TIME, CONTRACTOR) | assumption, simplest set (INTERN considered, omitted — see REQUIREMENTS.md) |
+| working_schedule_id | *(deferred)* | **not yet added** — WorkingSchedule doesn't exist until Phase 2; avoids a foreign key to a non-existent table |
+| bank_details_status | enum(MISSING, PROVIDED) | *(Phase 1 stand-in for full bank-detail fields, which are deferred; feeds the "missing bank details" payroll warning)* |
+| status | enum(ACTIVE, INACTIVE, TERMINATED) | *renamed/expanded from Phase 0's `active_status` (ACTIVE\|INACTIVE) per the Phase 1 spec* |
 | join_date | date | |
 
-Indexes: `department_id`, `manager_id`, `email` (unique).
+Indexes: `department_id`, `manager_id`, `email` (unique), `employee_code` (unique).
 
 ## Contract
 | Field | Type | Notes |
