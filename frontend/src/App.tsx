@@ -4,12 +4,19 @@ import { ProtectedRoute } from './components/ProtectedRoute';
 import { AuthProvider } from './contexts/AuthContext';
 import { Login } from './pages/Login';
 import { AdminUsers } from './pages/AdminUsers';
+import { Employees } from './pages/Employees';
+import { EmployeeDetail } from './pages/EmployeeDetail';
+import { Contracts } from './pages/Contracts';
+import { ContractDetail } from './pages/ContractDetail';
+import { Departments } from './pages/Departments';
+import { WorkingSchedules } from './pages/WorkingSchedules';
+import { WorkingScheduleForm } from './pages/WorkingScheduleForm';
 
 // Placeholder Pages
 const Placeholder = ({ title }: { title: string }) => (
-  <div className="flex h-full flex-col items-center justify-center rounded-lg border-2 border-dashed border-gray-300 p-12 text-center">
-    <h2 className="text-2xl font-semibold text-gray-700 mb-2">{title}</h2>
-    <p className="text-gray-500">This module has not been implemented yet in the current phase.</p>
+  <div className="flex h-full flex-col items-center justify-center rounded-xl border border-dashed border-gray-200 p-12 text-center">
+    <h2 className="text-base font-semibold text-gray-700 mb-1.5">{title}</h2>
+    <p className="text-sm text-gray-500">Coming in a future phase.</p>
   </div>
 );
 
@@ -25,10 +32,14 @@ function App() {
               <Route index element={<Navigate to="/dashboard" replace />} />
               <Route path="dashboard" element={<Placeholder title="Dashboard" />} />
             
-            <Route path="employees" element={<Placeholder title="Employees" />} />
-            <Route path="contracts" element={<Placeholder title="Contracts" />} />
-            <Route path="departments" element={<Placeholder title="Departments" />} />
-            <Route path="working-schedules" element={<Placeholder title="Working Schedules" />} />
+            <Route path="employees" element={<Employees />} />
+            <Route path="employees/:employeeId" element={<EmployeeDetail />} />
+            <Route path="contracts" element={<Contracts />} />
+            <Route path="contracts/:contractId" element={<ContractDetail />} />
+            <Route path="departments" element={<Departments />} />
+            <Route path="working-schedules" element={<WorkingSchedules />} />
+            <Route path="working-schedules/new" element={<WorkingScheduleForm />} />
+            <Route path="working-schedules/:scheduleId" element={<WorkingScheduleForm />} />
             
             <Route path="attendance" element={<Placeholder title="Attendance" />} />
             

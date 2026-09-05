@@ -1,16 +1,40 @@
 @import "tailwindcss";
 
 @theme {
-  --color-brand-50: #f0f9ff;
-  --color-brand-100: #e0f2fe;
-  --color-brand-500: #0ea5e9;
-  --color-brand-600: #0284c7;
-  --color-brand-900: #0c4a6e;
+  /* Payloom accent — one deliberate brand color (deep indigo/loom-thread) */
+  --color-brand-50: #f2f2fd;
+  --color-brand-100: #e6e6fb;
+  --color-brand-200: #cdccf7;
+  --color-brand-300: #a6a3f0;
+  --color-brand-400: #8480e8;
+  --color-brand-500: #6a63e0;
+  --color-brand-600: #564fd1;
+  --color-brand-700: #4741ab;
+  --color-brand-800: #383488;
+  --color-brand-900: #26236b;
+
+  /* Remap the neutral scale from cool slate to a warm-neutral tone, so every
+     existing bg-gray, text-gray and border-gray class across the app
+     inherits the new "calm enterprise" palette without per-file edits. */
+  --color-gray-50: #faf9f7;
+  --color-gray-100: #f4f2ef;
+  --color-gray-200: #e7e4de;
+  --color-gray-300: #d5d1c8;
+  --color-gray-400: #a8a29a;
+  --color-gray-500: #82796f;
+  --color-gray-600: #635b52;
+  --color-gray-700: #4a433c;
+  --color-gray-800: #332e29;
+  --color-gray-900: #1f1c19;
+
+  --shadow-elevation: 0 1px 2px 0 rgb(0 0 0 / 0.04), 0 1px 3px 0 rgb(0 0 0 / 0.03);
+  --shadow-popover: 0 4px 6px -1px rgb(0 0 0 / 0.06), 0 8px 24px -4px rgb(0 0 0 / 0.08);
 }
 
 @layer base {
   body {
-    @apply antialiased text-gray-900 bg-gray-50;
+    @apply antialiased text-gray-900;
+    background: var(--color-gray-50);
   }
 }
 

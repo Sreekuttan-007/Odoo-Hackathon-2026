@@ -64,36 +64,45 @@ def seed_db():
     # --- Employees ---
     emp_admin = Employee(
         employee_code="EMP0001", first_name="Alice", last_name="Admin", work_email="admin@payloom.local",
+        work_location="Bengaluru HQ",
         department_id=dept_management.id, job_position_id=pos_director.id, working_schedule_id=schedule_40h.id,
         status=EmployeeStatus.ACTIVE,
     )
+    db.add(emp_admin)
+    db.flush()
+
     emp_hr = Employee(
         employee_code="EMP0002", first_name="Bob", last_name="HR", work_email="hr@payloom.local",
+        work_location="Bengaluru HQ",
         department_id=dept_hr.id, job_position_id=pos_hr_manager.id, working_schedule_id=schedule_40h.id,
-        status=EmployeeStatus.ACTIVE,
+        manager_id=emp_admin.id, status=EmployeeStatus.ACTIVE,
     )
     emp_payroll = Employee(
         employee_code="EMP0003", first_name="Charlie", last_name="Payroll", work_email="payroll@payloom.local",
+        work_location="Bengaluru HQ",
         department_id=dept_finance.id, job_position_id=pos_payroll_manager.id, working_schedule_id=schedule_40h.id,
-        status=EmployeeStatus.ACTIVE,
+        manager_id=emp_admin.id, status=EmployeeStatus.ACTIVE,
     )
     emp_staff = Employee(
         employee_code="EMP0004", first_name="Dave", last_name="Staff", work_email="employee@payloom.local",
+        work_location="Bengaluru HQ",
         department_id=dept_engineering.id, job_position_id=pos_engineer.id, working_schedule_id=schedule_40h.id,
-        status=EmployeeStatus.ACTIVE,
+        manager_id=emp_admin.id, status=EmployeeStatus.ACTIVE,
     )
     emp_unlinked = Employee(
         employee_code="EMP0005", first_name="Eve", last_name="Unlinked", work_email="eve@payloom.local",
+        work_location="Mumbai Office",
         department_id=dept_sales.id, job_position_id=pos_sales_exec.id, working_schedule_id=schedule_48h.id,
-        status=EmployeeStatus.ACTIVE,
+        manager_id=emp_admin.id, status=EmployeeStatus.ACTIVE,
     )
-    db.add_all([emp_admin, emp_hr, emp_payroll, emp_staff, emp_unlinked])
+    db.add_all([emp_hr, emp_payroll, emp_staff, emp_unlinked])
     db.flush()
 
     # Demo employee for the manual demo flow: reports to Dave, matches
     # docs/PHASE_LOG.md / the organizer walkthrough (Aarav Mehta, two contracts).
     emp_aarav = Employee(
         employee_code="EMP0006", first_name="Aarav", last_name="Mehta", work_email="aarav.mehta@payloom.local",
+        work_location="Bengaluru HQ",
         department_id=dept_engineering.id, job_position_id=pos_engineer.id, working_schedule_id=schedule_40h.id,
         manager_id=emp_staff.id, status=EmployeeStatus.ACTIVE,
     )

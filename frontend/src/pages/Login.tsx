@@ -2,7 +2,8 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import api from '../services/api';
-import { Mail, Lock, Eye, EyeOff, Loader2 } from 'lucide-react';
+import { Eye, EyeOff, Loader2 } from 'lucide-react';
+import { Button } from '../components/ui/Button';
 
 export function Login() {
   const [email, setEmail] = useState('');
@@ -10,7 +11,7 @@ export function Login() {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  
+
   const { login } = useAuth();
   const navigate = useNavigate();
 
@@ -40,110 +41,104 @@ export function Login() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8 bg-white p-10 rounded-xl shadow-sm border border-gray-100">
+    <div className="min-h-screen flex bg-white">
+      {/* Brand panel */}
+      <div className="hidden lg:flex lg:w-1/2 bg-gray-900 flex-col justify-between p-12">
+        <div className="flex items-center gap-2.5">
+          <div className="h-7 w-7 rounded-md bg-brand-500 flex items-center justify-center">
+            <span className="text-white text-sm font-bold">P</span>
+          </div>
+          <span className="text-white text-lg font-semibold tracking-tight">Payloom</span>
+        </div>
         <div>
-          <h2 className="text-center text-3xl font-extrabold text-gray-900 tracking-tight">
-            Payloom
-          </h2>
-          <p className="mt-2 text-center text-sm text-gray-600">
-            HR & Payroll, woven together.
+          <p className="text-2xl font-medium text-white leading-snug max-w-sm">
+            HR &amp; Payroll, woven together.
+          </p>
+          <p className="text-sm text-gray-400 mt-4 max-w-sm">
+            Employees, contracts, schedules and payroll — one connected record
+            of truth for your workforce.
           </p>
         </div>
-        
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-          {error && (
-            <div className="rounded-md bg-red-50 p-4 border border-red-100">
-              <div className="flex">
-                <div className="ml-3">
-                  <h3 className="text-sm font-medium text-red-800">{error}</h3>
-                </div>
-              </div>
+        <p className="text-xs text-gray-500">© 2026 Payloom</p>
+      </div>
+
+      {/* Form panel */}
+      <div className="flex flex-1 items-center justify-center px-6 py-12">
+        <div className="w-full max-w-sm">
+          <div className="lg:hidden flex items-center gap-2.5 mb-10">
+            <div className="h-7 w-7 rounded-md bg-brand-600 flex items-center justify-center">
+              <span className="text-white text-sm font-bold">P</span>
             </div>
-          )}
-          
-          <div className="space-y-4">
-            <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-                Work Email
-              </label>
-              <div className="mt-1 relative rounded-md shadow-sm">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Mail className="h-5 w-5 text-gray-400" />
-                </div>
-                <input
-                  id="email"
-                  name="email"
-                  type="email"
-                  autoComplete="email"
-                  required
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="focus:ring-brand-500 focus:border-brand-500 block w-full pl-10 sm:text-sm border-gray-300 rounded-md py-2 border"
-                  placeholder="you@company.com"
-                  disabled={loading}
-                />
+            <span className="text-gray-900 text-lg font-semibold tracking-tight">Payloom</span>
+          </div>
+
+          <h1 className="text-xl font-semibold text-gray-900">Welcome back</h1>
+          <p className="text-sm text-gray-500 mt-1 mb-8">Sign in to your workspace.</p>
+
+          <form onSubmit={handleSubmit} className="space-y-4">
+            {error && (
+              <div className="rounded-md bg-red-50 border border-red-100 px-3 py-2.5">
+                <p className="text-sm text-red-700">{error}</p>
               </div>
+            )}
+
+            <div>
+              <label htmlFor="email" className="block text-xs font-medium text-gray-600 mb-1.5">
+                Work email
+              </label>
+              <input
+                id="email"
+                name="email"
+                type="email"
+                autoComplete="email"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="block w-full h-9 px-3 rounded-md border border-gray-300 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-brand-500 focus:border-brand-500"
+                placeholder="you@company.com"
+                disabled={loading}
+              />
             </div>
 
             <div>
-              <div className="flex items-center justify-between">
-                <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+              <div className="flex items-center justify-between mb-1.5">
+                <label htmlFor="password" className="block text-xs font-medium text-gray-600">
                   Password
                 </label>
-                <div className="text-sm">
-                  <a href="#" className="font-medium text-brand-600 hover:text-brand-500">
-                    Forgot password?
-                  </a>
-                </div>
               </div>
-              <div className="mt-1 relative rounded-md shadow-sm">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Lock className="h-5 w-5 text-gray-400" />
-                </div>
+              <div className="relative">
                 <input
                   id="password"
                   name="password"
-                  type={showPassword ? "text" : "password"}
+                  type={showPassword ? 'text' : 'password'}
                   autoComplete="current-password"
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="focus:ring-brand-500 focus:border-brand-500 block w-full pl-10 pr-10 sm:text-sm border-gray-300 rounded-md py-2 border"
+                  className="block w-full h-9 px-3 pr-9 rounded-md border border-gray-300 text-sm text-gray-900 focus:outline-none focus:ring-1 focus:ring-brand-500 focus:border-brand-500"
                   disabled={loading}
                 />
-                <div className="absolute inset-y-0 right-0 pr-3 flex items-center">
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="text-gray-400 hover:text-gray-500 focus:outline-none"
-                    disabled={loading}
-                  >
-                    {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
-                  </button>
-                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600"
+                  disabled={loading}
+                  tabIndex={-1}
+                >
+                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
               </div>
             </div>
-          </div>
 
-          <div>
-            <button
-              type="submit"
-              disabled={loading}
-              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-brand-600 hover:bg-brand-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-500 disabled:opacity-70"
-            >
-              {loading ? (
-                <Loader2 className="w-5 h-5 animate-spin" />
-              ) : (
-                "Sign In"
-              )}
-            </button>
-          </div>
-          
-          <p className="text-center text-xs text-gray-500 mt-4">
-            Accounts are created by an administrator.
-          </p>
-        </form>
+            <Button type="submit" variant="primary" className="w-full mt-2" disabled={loading}>
+              {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Sign in'}
+            </Button>
+
+            <p className="text-center text-xs text-gray-400 pt-2">
+              Accounts are created by an administrator.
+            </p>
+          </form>
+        </div>
       </div>
     </div>
   );

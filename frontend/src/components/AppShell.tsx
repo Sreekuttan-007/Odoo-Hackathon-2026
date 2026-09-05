@@ -1,75 +1,133 @@
-import { Outlet, NavLink, useNavigate } from 'react-router-dom';
+import { Outlet, NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { LogOut } from 'lucide-react';
+import { LogOut, LayoutDashboard, Users, FileText, Building2, Clock, CalendarCheck, PlaneTakeoff, Wallet, ShieldCheck } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
+
+interface NavItem {
+  to: string;
+  label: string;
+  icon: LucideIcon;
+}
+
+interface NavGroup {
+  label: string;
+  items: NavItem[];
+}
+
+const NAV_GROUPS: NavGroup[] = [
+  { label: '', items: [{ to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard }] },
+  {
+    label: 'People',
+    items: [
+      { to: '/employees', label: 'Employees', icon: Users },
+      { to: '/contracts', label: 'Contracts', icon: FileText },
+      { to: '/departments', label: 'Departments', icon: Building2 },
+      { to: '/working-schedules', label: 'Working Schedules', icon: Clock },
+    ],
+  },
+  {
+    label: 'Time & Attendance',
+    items: [
+      { to: '/attendance', label: 'Attendance', icon: CalendarCheck },
+      { to: '/time-off/requests', label: 'Time Off Requests', icon: PlaneTakeoff },
+      { to: '/time-off/allocations', label: 'Allocations', icon: PlaneTakeoff },
+      { to: '/time-off/types', label: 'Time Off Types', icon: PlaneTakeoff },
+    ],
+  },
+  {
+    label: 'Payroll',
+    items: [
+      { to: '/payroll/payruns', label: 'Payruns', icon: Wallet },
+      { to: '/payroll/payslips', label: 'Payslips', icon: Wallet },
+      { to: '/payroll/salary-structures', label: 'Salary Structures', icon: Wallet },
+      { to: '/payroll/salary-rules', label: 'Salary Rules', icon: Wallet },
+    ],
+  },
+];
 
 export function AppShell() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const handleLogout = () => {
     logout();
     navigate('/login');
   };
 
-  const activeClass = "bg-blue-800 text-white";
-  const inactiveClass = "text-blue-100 hover:bg-blue-800 hover:text-white";
+  const pageTitle = NAV_GROUPS.flatMap(g => g.items).find(item => location.pathname.startsWith(item.to))?.label
+    || (location.pathname.startsWith('/admin') ? 'Users' : 'Workspace');
 
   return (
     <div className="flex h-screen bg-gray-50">
       {/* Sidebar */}
-      <aside className="w-64 flex-shrink-0 bg-blue-900 flex flex-col transition-all duration-300">
-        <div className="flex h-16 shrink-0 items-center px-6">
-          <span className="text-xl font-bold text-white tracking-tight">PeoplePay360</span>
+      <aside className="w-60 flex-shrink-0 bg-white border-r border-gray-200 flex flex-col">
+        <div className="flex h-14 shrink-0 items-center gap-2 px-5 border-b border-gray-100">
+          <div className="h-6 w-6 rounded-md bg-brand-600 flex items-center justify-center">
+            <span className="text-white text-xs font-bold">P</span>
+          </div>
+          <span className="text-[15px] font-semibold text-gray-900 tracking-tight">Payloom</span>
         </div>
-        
-        <nav className="flex flex-1 flex-col overflow-y-auto px-4 py-4 space-y-1">
-          <NavLink to="/dashboard" className={({isActive}) => `px-3 py-2 rounded-md text-sm font-medium ${isActive ? activeClass : inactiveClass}`}>Dashboard</NavLink>
-          
-          <div className="pt-4 pb-1">
-            <p className="px-3 text-xs font-semibold text-blue-300 uppercase tracking-wider">Employees</p>
-          </div>
-          <NavLink to="/employees" className={({isActive}) => `px-3 py-2 rounded-md text-sm font-medium ${isActive ? activeClass : inactiveClass}`}>Employees</NavLink>
-          <NavLink to="/contracts" className={({isActive}) => `px-3 py-2 rounded-md text-sm font-medium ${isActive ? activeClass : inactiveClass}`}>Contracts</NavLink>
-          <NavLink to="/departments" className={({isActive}) => `px-3 py-2 rounded-md text-sm font-medium ${isActive ? activeClass : inactiveClass}`}>Departments</NavLink>
-          <NavLink to="/working-schedules" className={({isActive}) => `px-3 py-2 rounded-md text-sm font-medium ${isActive ? activeClass : inactiveClass}`}>Working Schedules</NavLink>
-          
-          <div className="pt-4 pb-1">
-            <p className="px-3 text-xs font-semibold text-blue-300 uppercase tracking-wider">Time & Attendance</p>
-          </div>
-          <NavLink to="/attendance" className={({isActive}) => `px-3 py-2 rounded-md text-sm font-medium ${isActive ? activeClass : inactiveClass}`}>Attendance</NavLink>
-          <NavLink to="/time-off/requests" className={({isActive}) => `px-3 py-2 rounded-md text-sm font-medium ${isActive ? activeClass : inactiveClass}`}>Time Off Requests</NavLink>
-          <NavLink to="/time-off/allocations" className={({isActive}) => `px-3 py-2 rounded-md text-sm font-medium ${isActive ? activeClass : inactiveClass}`}>Allocations</NavLink>
-          <NavLink to="/time-off/types" className={({isActive}) => `px-3 py-2 rounded-md text-sm font-medium ${isActive ? activeClass : inactiveClass}`}>Time Off Types</NavLink>
-          
-          <div className="pt-4 pb-1">
-            <p className="px-3 text-xs font-semibold text-blue-300 uppercase tracking-wider">Payroll</p>
-          </div>
-          <NavLink to="/payroll/payruns" className={({isActive}) => `px-3 py-2 rounded-md text-sm font-medium ${isActive ? activeClass : inactiveClass}`}>Payruns</NavLink>
-          <NavLink to="/payroll/payslips" className={({isActive}) => `px-3 py-2 rounded-md text-sm font-medium ${isActive ? activeClass : inactiveClass}`}>Payslips</NavLink>
-          <NavLink to="/payroll/salary-structures" className={({isActive}) => `px-3 py-2 rounded-md text-sm font-medium ${isActive ? activeClass : inactiveClass}`}>Salary Structures</NavLink>
-          <NavLink to="/payroll/salary-rules" className={({isActive}) => `px-3 py-2 rounded-md text-sm font-medium ${isActive ? activeClass : inactiveClass}`}>Salary Rules</NavLink>
-          
-          {user?.role === 'ADMIN' && (
-            <>
-              <div className="pt-4 pb-1">
-                <p className="px-3 text-xs font-semibold text-blue-300 uppercase tracking-wider">Administration</p>
+
+        <nav className="flex flex-1 flex-col overflow-y-auto px-3 py-4 space-y-5">
+          {NAV_GROUPS.map((group, i) => (
+            <div key={i}>
+              {group.label && (
+                <p className="px-3 mb-1.5 text-[11px] font-semibold text-gray-400 uppercase tracking-wider">{group.label}</p>
+              )}
+              <div className="space-y-0.5">
+                {group.items.map(item => (
+                  <NavLink
+                    key={item.to}
+                    to={item.to}
+                    className={({ isActive }) =>
+                      `flex items-center gap-2.5 px-3 py-1.5 rounded-md text-[13px] font-medium transition-colors duration-150 ${
+                        isActive
+                          ? 'bg-brand-50 text-brand-700'
+                          : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                      }`
+                    }
+                  >
+                    <item.icon className="w-4 h-4 shrink-0" />
+                    <span className="truncate">{item.label}</span>
+                  </NavLink>
+                ))}
               </div>
-              <NavLink to="/admin/users" className={({isActive}) => `px-3 py-2 rounded-md text-sm font-medium ${isActive ? activeClass : inactiveClass}`}>Users</NavLink>
-            </>
+            </div>
+          ))}
+
+          {user?.role === 'ADMIN' && (
+            <div>
+              <p className="px-3 mb-1.5 text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Administration</p>
+              <NavLink
+                to="/admin/users"
+                className={({ isActive }) =>
+                  `flex items-center gap-2.5 px-3 py-1.5 rounded-md text-[13px] font-medium transition-colors duration-150 ${
+                    isActive ? 'bg-brand-50 text-brand-700' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                  }`
+                }
+              >
+                <ShieldCheck className="w-4 h-4 shrink-0" />
+                Users
+              </NavLink>
+            </div>
           )}
         </nav>
 
         {/* User profile */}
-        <div className="flex shrink-0 border-t border-blue-800 p-4">
-          <div className="flex w-full items-center justify-between">
-            <div className="flex items-center truncate mr-2">
-              <div className="ml-3 truncate">
-                <p className="text-sm font-medium text-white truncate">{user?.employee?.first_name} {user?.employee?.last_name}</p>
-                <p className="text-xs font-medium text-blue-200 truncate">{user?.role}</p>
+        <div className="flex shrink-0 border-t border-gray-100 p-3">
+          <div className="flex w-full items-center justify-between px-2">
+            <div className="flex items-center gap-2.5 truncate">
+              <div className="h-7 w-7 rounded-full bg-gray-100 flex items-center justify-center text-gray-600 text-xs font-semibold shrink-0">
+                {user?.employee?.first_name?.[0]}{user?.employee?.last_name?.[0]}
+              </div>
+              <div className="truncate">
+                <p className="text-[13px] font-medium text-gray-900 truncate">{user?.employee?.first_name} {user?.employee?.last_name}</p>
+                <p className="text-[11px] text-gray-400 truncate">{user?.role.replace(/_/g, ' ')}</p>
               </div>
             </div>
-            <button onClick={handleLogout} className="text-blue-200 hover:text-white p-2">
-              <LogOut className="w-5 h-5" />
+            <button onClick={handleLogout} title="Log out" className="text-gray-400 hover:text-gray-700 p-1.5 rounded-md hover:bg-gray-100 transition-colors">
+              <LogOut className="w-4 h-4" />
             </button>
           </div>
         </div>
@@ -77,8 +135,8 @@ export function AppShell() {
 
       {/* Main content area */}
       <div className="flex flex-1 flex-col overflow-hidden">
-        <header className="flex h-16 shrink-0 items-center justify-between border-b border-gray-200 bg-white px-6">
-          <h1 className="text-lg font-semibold text-gray-900">Workspace</h1>
+        <header className="flex h-14 shrink-0 items-center justify-between border-b border-gray-200 bg-white px-6">
+          <h2 className="text-[13px] font-medium text-gray-500">{pageTitle}</h2>
         </header>
 
         <main className="flex-1 overflow-y-auto p-6">

@@ -1,6 +1,7 @@
 import { Navigate, Outlet } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import type { Role } from '../types';
+import { Button } from './ui/Button';
 
 interface ProtectedRouteProps {
   allowedRoles?: Role[];
@@ -24,14 +25,9 @@ export function ProtectedRoute({ allowedRoles }: ProtectedRouteProps) {
   if (allowedRoles && !allowedRoles.includes(user.role)) {
     return (
       <div className="flex h-full flex-col items-center justify-center p-12 text-center">
-        <h2 className="text-2xl font-bold text-gray-900 mb-2">Access Denied</h2>
-        <p className="text-gray-500 mb-6">You don't have access to this area.</p>
-        <button 
-          onClick={() => window.history.back()}
-          className="px-4 py-2 bg-brand-600 text-white rounded-md hover:bg-brand-700 font-medium"
-        >
-          Go Back
-        </button>
+        <h2 className="text-base font-semibold text-gray-900 mb-1.5">Access Denied</h2>
+        <p className="text-sm text-gray-500 mb-5">You don't have access to this area.</p>
+        <Button variant="secondary" onClick={() => window.history.back()}>Go Back</Button>
       </div>
     );
   }
