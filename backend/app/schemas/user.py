@@ -5,7 +5,7 @@ from app.models.user import Role, AccountStatus
 from app.schemas.employee import EmployeeResponse
 
 class UserBase(BaseModel):
-    work_email: EmailStr
+    work_email: str
     role: Role
     status: AccountStatus
 
