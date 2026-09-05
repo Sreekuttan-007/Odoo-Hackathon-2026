@@ -20,7 +20,7 @@ Policy (documented per docs/DOMAIN_TERMS.md):
   check_out >= check_in and must not overlap another Attendance record for
   the same employee.
 """
-from datetime import date, datetime, timedelta, timezone
+from datetime import date, datetime, timezone
 from typing import Optional
 from zoneinfo import ZoneInfo
 from sqlalchemy.orm import Session

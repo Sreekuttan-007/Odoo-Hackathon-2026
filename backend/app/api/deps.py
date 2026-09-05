@@ -4,7 +4,6 @@ import jwt
 from sqlalchemy.orm import Session
 from app.core.config import settings
 from app.db.database import get_db
-from app.models.employee import Employee
 from app.models.user import User, AccountStatus
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/auth/login")
@@ -17,10 +16,11 @@ def get_current_user(db: Session = Depends(get_db), token: str = Depends(oauth2_
     )
     try:
         payload = jwt.decode(token, settings.SECRET_KEY, algorithms=["HS256"])
-        user_id: str = payload.get("sub")
-        if user_id is None:
+        subject = payload.get("sub")
+        if subject is None:
             raise credentials_exception
-    except jwt.InvalidTokenError:
+        user_id = int(subject)
+    except (jwt.InvalidTokenError, TypeError, ValueError):
         raise credentials_exception
     
     user = db.query(User).filter(User.id == user_id).first()

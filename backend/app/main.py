@@ -5,7 +5,6 @@ from app.core.config import settings
 
 from app.api.auth import router as auth_router
 from app.api.admin_users import router as admin_users_router
-from app.api.people import router as people_router
 from app.api.departments import router as departments_router
 from app.api.job_positions import router as job_positions_router
 from app.api.employees import router as employees_router
@@ -59,7 +58,3 @@ app.include_router(working_schedules_router, prefix="/api", tags=["Working Sched
 app.include_router(attendance_router, prefix="/api", tags=["Attendance"])
 app.include_router(time_off_router, prefix="/api", tags=["Time Off"])
 app.include_router(payroll_router, prefix="/api", tags=["Payroll"])
-# Registered last: its GET routes duplicate the routers above (which already
-# handle nested working_schedule serialization correctly), so this only
-# matters for any path that isn't already covered above.
-app.include_router(people_router, prefix="/api", tags=["People"])

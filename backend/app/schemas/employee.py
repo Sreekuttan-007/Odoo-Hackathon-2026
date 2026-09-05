@@ -1,4 +1,4 @@
-from pydantic import BaseModel, model_validator
+from pydantic import BaseModel
 from typing import Optional
 from datetime import datetime
 from app.models.employee import EmployeeStatus

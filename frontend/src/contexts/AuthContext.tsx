@@ -35,7 +35,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         try {
           const res = await api.get('/auth/me');
           setUser(res.data);
-        } catch (error) {
+        } catch {
           localStorage.removeItem('token');
         }
       }

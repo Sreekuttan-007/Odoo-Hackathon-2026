@@ -27,14 +27,7 @@ import { PayrunWizard } from './pages/PayrunWizard';
 import { PayrunDetail } from './pages/PayrunDetail';
 import { Payslips } from './pages/Payslips';
 import { PayslipDetail } from './pages/PayslipDetail';
-
-// Placeholder Pages
-const Placeholder = ({ title }: { title: string }) => (
-  <div className="flex h-full flex-col items-center justify-center rounded-xl border border-dashed border-gray-200 p-12 text-center">
-    <h2 className="text-base font-semibold text-gray-700 mb-1.5">{title}</h2>
-    <p className="text-sm text-gray-500">Coming in a future phase.</p>
-  </div>
-);
+import { Dashboard } from './pages/Dashboard';
 
 function App() {
   return (
@@ -46,7 +39,7 @@ function App() {
           <Route element={<ProtectedRoute />}>
             <Route path="/" element={<AppShell />}>
               <Route index element={<Navigate to="/dashboard" replace />} />
-              <Route path="dashboard" element={<Placeholder title="Dashboard" />} />
+              <Route path="dashboard" element={<Dashboard />} />
             
             <Route path="employees" element={<Employees />} />
             <Route path="employees/:employeeId" element={<EmployeeDetail />} />

@@ -1,0 +1,21 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: peoplepay-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: peoplepay
+      POSTGRES_USER: peoplepay
+      POSTGRES_PASSWORD: peoplepay_dev_password
+    ports:
+      - "5433:5432"
+    volumes:
+      - peoplepay_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U peoplepay -d peoplepay"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  peoplepay_postgres_data:

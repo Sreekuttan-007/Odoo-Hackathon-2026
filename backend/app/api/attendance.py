@@ -4,7 +4,6 @@ from typing import List, Optional
 from datetime import date
 from app.db.database import get_db
 from app.models.attendance import Attendance
-from app.models.employee import Employee
 from app.models.user import User
 from app.schemas.attendance import AttendanceResponse, AttendanceUpdate, CurrentAttendanceResponse
 from app.schemas.employee import EmployeeMinimal
