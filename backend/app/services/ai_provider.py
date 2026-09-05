@@ -24,7 +24,7 @@ TIMEOUT_SECONDS = 15.0
 ANTHROPIC_URL = "https://api.anthropic.com/v1/messages"
 ANTHROPIC_MODEL = "claude-haiku-4-5-20251001"
 
-GEMINI_MODEL = "gemini-2.5-flash"
+GEMINI_MODEL = "gemini-3.6-flash"
 GEMINI_URL = f"https://generativelanguage.googleapis.com/v1beta/models/{GEMINI_MODEL}:generateContent"
 
 
@@ -81,9 +81,14 @@ def _call_gemini(system: str, user: str, max_tokens: int) -> str:
             "system_instruction": {"parts": [{"text": system}]},
             "contents": [{"role": "user", "parts": [{"text": user}]}],
             "generationConfig": {
-                "maxOutputTokens": max_tokens,
+                # Gemini 3.x "thinking" tokens count against the output
+                # budget; cap them low and give the answer real headroom so
+                # the JSON never comes back truncated (finishReason
+                # MAX_TOKENS -> unparseable).
+                "maxOutputTokens": max_tokens + 1024,
                 "temperature": 0.2,
                 "responseMimeType": "application/json",
+                "thinkingConfig": {"thinkingBudget": 256},
             },
         },
         timeout=TIMEOUT_SECONDS,
