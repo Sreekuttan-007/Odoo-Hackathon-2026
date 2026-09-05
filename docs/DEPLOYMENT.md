@@ -22,6 +22,32 @@ the **backend** and the **frontend**. Recommended stack below is all free-tier f
 
 ---
 
+## Fast path — Render Blueprint (both services at once)
+
+The repo has a **`render.yaml`** at the root. It creates the backend *and* the
+frontend in one go.
+
+1. [dashboard.render.com](https://dashboard.render.com) → **New → Blueprint**.
+2. Connect the GitHub repo → Render reads `render.yaml` and shows `payloom-api` + `payloom-web`.
+3. Fill the values it prompts for:
+   - `payloom-api` → **`DATABASE_URL`**: your Neon `postgresql+psycopg://…?sslmode=require` string
+   - `payloom-api` → **`GEMINI_API_KEY`**: your key (or leave blank — the AI brief just falls back)
+   - `payloom-web` → **`VITE_API_BASE_URL`**: `https://payloom-api.onrender.com/api`
+     (use whatever host Render actually assigns `payloom-api`; keep `/api`)
+4. **Apply** → Render builds both. `SECRET_KEY` is auto-generated; `CORS_ORIGINS` defaults to
+   `https://payloom-web.onrender.com`.
+5. Once `payloom-api` is live → open it → **Shell** → `cd backend && python seed.py` (once).
+6. Open `payloom-web`'s URL, log in as `admin@payloom.local` / `admin123`.
+7. If login shows a CORS error, set `payloom-api` → `CORS_ORIGINS` to the exact `payloom-web` URL and redeploy.
+
+> Render free static sites don't cold-start; the free web service (backend) sleeps after
+> 15 min idle (~30 s wake). For judging, bump `payloom-api` to a paid instance or ping it
+> right before.
+
+The manual steps below are the same thing done by hand, or for splitting across Render + Vercel.
+
+---
+
 ## 1. Backend → Render (recommended)
 
 [Render](https://render.com) reads a repo, builds it, and gives you an HTTPS URL. Free web
