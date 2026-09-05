@@ -29,7 +29,7 @@
 
 /payroll/payruns
 /payroll/payruns/new
-/payroll/payruns/:payrunId
+/payroll/payruns/:payrunId          # Preflight + Payloom Intelligence (Generate Payroll Brief) live here
 /payroll/payslips
 /payroll/payslips/:payslipId
 /payroll/payslips/:payslipId/trace

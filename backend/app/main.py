@@ -14,6 +14,7 @@ from app.api.attendance import router as attendance_router
 from app.api.time_off import router as time_off_router
 from app.api.payroll import router as payroll_router
 from app.api.simulator import router as simulator_router
+from app.api.intelligence import router as intelligence_router
 
 app = FastAPI(
     title="PeoplePay360 API",
@@ -61,3 +62,4 @@ app.include_router(attendance_router, prefix="/api", tags=["Attendance"])
 app.include_router(time_off_router, prefix="/api", tags=["Time Off"])
 app.include_router(payroll_router, prefix="/api", tags=["Payroll"])
 app.include_router(simulator_router, prefix="/api", tags=["Payroll Simulator"])
+app.include_router(intelligence_router, prefix="/api", tags=["Payloom Intelligence"])

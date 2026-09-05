@@ -520,6 +520,52 @@ export interface PreflightResult {
   message: string | null;
 }
 
+// Payloom Intelligence (Phase 10) — a grounded AI payroll brief. Every
+// figure comes from the deterministic engines; every statement is
+// validated against a backend source registry. See
+// backend/app/services/intelligence.py.
+export interface BriefSource {
+  id: string;
+  type: 'PAYROLL' | 'PREFLIGHT' | 'SIMULATOR';
+  code: string;
+  severity: WarningSeverity | null;
+  label: string;
+  detail: string | null;
+  employee_ref: string | null;
+  route: string | null;
+}
+
+export interface BriefItem {
+  title: string;
+  text: string;
+  priority: WarningSeverity | null;
+  source_ids: string[];
+  source_type: string | null;
+  source_code: string | null;
+  source_ref: string | null;
+  route: string | null;
+}
+
+export interface PayrollBrief {
+  available: boolean;
+  reason: string | null;
+  is_fallback: boolean;
+  provider: string | null;
+  payrun_id: number;
+  reference: string;
+  period: { start: string; end: string };
+  status: PayrunStatus;
+  headline: string | null;
+  summary: string | null;
+  attention_items: BriefItem[];
+  observations: BriefItem[];
+  suggested_review_order: BriefItem[];
+  sources: BriefSource[];
+  deterministic_summary: string;
+  generated_at: string;
+  evidence_fingerprint: string;
+}
+
 export interface PayslipSummary {
   id: number;
   payrun_id: number;

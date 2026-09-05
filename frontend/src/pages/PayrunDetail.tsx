@@ -7,6 +7,7 @@ import { SectionCard } from '../components/ui/SectionCard';
 import { SkeletonDetail } from '../components/ui/Skeleton';
 import { Button } from '../components/ui/Button';
 import { PreflightPanel } from '../components/PreflightPanel';
+import { PayrollBrief } from '../components/PayrollBrief';
 import { useToast, ToastViewport } from '../components/Toast';
 import { formatDate, formatMoney } from '../lib/format';
 import { ArrowLeft, Calculator, ShieldCheck, Banknote, AlertTriangle, FileDown } from 'lucide-react';
@@ -183,6 +184,10 @@ export function PayrunDetail() {
           onRun={() => runPreflight('post')}
           panelId={PREFLIGHT_PANEL_ID}
         />
+      )}
+
+      {payrunId && (
+        <PayrollBrief payrunId={payrunId} canGenerate={PREFLIGHT_STATUSES.includes(payrun.status)} />
       )}
 
       <SectionCard padded={false}>

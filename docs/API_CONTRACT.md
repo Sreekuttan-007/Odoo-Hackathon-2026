@@ -338,3 +338,38 @@
   employees increased/decreased/unchanged) and, only when the period
   spans 28–31 days, `annualized_net_delta_estimate` (`monthly delta × 12`,
   explicitly an estimate, not a forecast).
+
+## Payloom Intelligence (Phase 10)
+- `POST /api/payroll/payruns/{payrun_id}/intelligence/brief` — RBAC:
+  `HR_PAYROLL_USER`/`HR_PAYROLL_MANAGER`/`ADMIN` (same as Payrun
+  operations); `EMPLOYEE` and `HR_MANAGER` → `403`. Optional body
+  `{"simulator_scenario": {description?, assumption?,
+  aggregate_net_delta_display?, annualized_note?, employees_simulated?}}`
+  — a scenario the user *just* ran in the Simulator, passed through by the
+  client and never stored (Simulator results are ephemeral).
+- **Grounded, read-only, AI-optional.** The backend builds a deterministic
+  *evidence packet* + *source registry* from `preflight.run_preflight`
+  (findings, verbatim — severity is never re-derived) and the payrun
+  totals, each fact carrying a stable `id`, a backend-owned `severity`,
+  and a pre-computed number. That packet — with employee **codes** only,
+  never names/bank/IDs/contact/secrets — is sent to the provider
+  (Anthropic, gated by the optional `ANTHROPIC_API_KEY`). Every returned
+  claim is then validated: an item citing an unknown/absent source id is
+  dropped; `priority` is normalised to the cited source's deterministic
+  severity (AI cannot upgrade a WARNING to a BLOCKER); a ₹-figure not
+  present verbatim in a cited source is rejected.
+- **Response** (`PayrollBriefResponse`): `available`, `reason`
+  (`NOT_CONFIGURED`/`TIMEOUT`/`RATE_LIMITED`/`PROVIDER_ERROR`/
+  `MALFORMED_RESPONSE`/`NOT_COMPUTED`), `is_fallback`, `headline`,
+  `summary`, `attention_items[]`, `observations[]`,
+  `suggested_review_order[]` (each `{title, text, priority, source_ids[],
+  source_type, source_code, source_ref, route}`), `sources[]`,
+  `deterministic_summary` (always present, backend-generated),
+  `evidence_fingerprint`, `generated_at`.
+- **Never fails the page.** No key / timeout / 4xx / 5xx / malformed JSON
+  → `available:false` with a backend-generated deterministic fallback
+  brief (attention items straight from Preflight). DRAFT payrun →
+  `available:false, reason:NOT_COMPUTED`. Persists nothing; never
+  recomputes payroll; never mutates the Payrun.
+- The Payslip-level companion is the existing
+  `GET /api/payroll/payslips/{id}/trace/explain` (Phase 7B narrator).
