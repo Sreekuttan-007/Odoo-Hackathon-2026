@@ -72,3 +72,57 @@ Payslip and renders it — it has no payroll logic and cannot change numbers.
 `integrations/emailService.ts` takes already-generated PDFs and sends them;
 its failures are logged as delivery warnings and never roll back or mutate
 Payrun/Payslip state (0.30).
+
+## Innovation Layer (PayTrace, Preflight, Simulator)
+
+Three additional payroll-intelligence endpoints (full request/response shapes
+in `API_CONTRACT.md` §12). All three are **thin wrappers around the existing
+modules above — none introduces a second calculation engine.**
+
+```
+backend/src/payroll/
+    ...
+    trace.ts        # buildPayTrace(payslip) — reads context.results already
+                     # produced during computePayslip; no recomputation
+    preflight.ts     # runPreflight(payrun) — calls validateEmployeePayrollData +
+                     # validatePayslip for the payrun's current employee set,
+                     # read-only, callable before or after Compute
+    simulate.ts      # simulatePayrun(payrun, overrides) — calls ruleEngine.ts's
+                     # executeSalaryRule against an in-memory structure/rule
+                     # set with `overrides` applied; writes nothing
+```
+
+### PayTrace
+`computePayslipLines` already builds `context.results[ruleCode] = amount` as
+it runs each rule. `buildPayTrace` does not recompute anything — it re-shapes
+the same per-rule inputs/outputs (which rule, what it read, what it produced)
+that were already available at compute time into an ordered explanation. To
+support this without extra computation, `computePayslip` should persist a
+lightweight per-line `inputs` snapshot (the operands a rule actually read —
+e.g. which prior `results` keys a FORMULA referenced) alongside the existing
+`PayslipLine.amount`, rather than only the final number. This is a small
+addition to what `PayslipLine` captures, not a parallel data path.
+
+### Payroll Preflight
+`runPreflight(payrun)` calls the *same* `validateEmployeePayrollData` and
+`validatePayslip` functions used during real `Validate`, against the Payrun's
+current employee/contract set. It is read-only and idempotent — calling it
+repeatedly, or calling it on a `DRAFT` Payrun before any Compute has run,
+never mutates `Payrun`/`Payslip` state. Every blocker/warning it returns must
+be a real row from the Validation Matrix (§ above) — a Preflight response
+with an item that doesn't map to a matrix condition is a bug, not a feature
+("never generate fake warnings").
+
+### Payroll Simulator
+`simulatePayrun(payrun, overrides)` builds the same `context` shape
+(`getApplicableContract`, `calculateWorkedDays`, attendance/leave summaries)
+for the Payrun's already-selected employees, then runs `ruleEngine.ts`'s
+`executeSalaryRule` loop against an **in-memory** merge of the real
+SalaryStructure/SalaryRule rows with the caller's `ruleOverrides` — the real
+rows in the database are never touched, and no `Payslip`/`PayslipLine` rows
+are written for a simulation. The output shape intentionally matches
+`/compute`'s response (`summary`, `payslips`) plus a delta against the last
+real computation, so the frontend can reuse its Payslip-breakdown rendering
+for both real and simulated results. Persisting a simulated rule change to
+real `SalaryRule` records is an explicit, separate write (normal Salary Rule
+CRUD) — simulation itself never triggers it.

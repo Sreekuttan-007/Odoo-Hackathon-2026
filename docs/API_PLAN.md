@@ -4,6 +4,11 @@ All endpoints are `/api/v1/...`, JSON, JWT bearer auth. Role required is
 listed per endpoint (see REQUIREMENTS.md permission matrix). Every mutating
 endpoint re-validates role server-side regardless of what the frontend shows.
 
+This file is the quick-reference index by module. For concrete request/
+response JSON shapes, canonical enum values, and the three Innovation Layer
+endpoints (PayTrace, Preflight, Simulator), see **`API_CONTRACT.md`** — that
+document, not this one, is the binding contract with the frontend agent.
+
 ## Auth
 | Method | Path | Purpose | Role |
 |---|---|---|---|
@@ -89,6 +94,13 @@ endpoint re-validates role server-side regardless of what the frontend shows.
 |---|---|---|---|
 | GET | /payslips, /payslips/:id | list/detail incl. lines + warnings | HR_PAYROLL_USER+ (self, read-only, for EMPLOYEE) |
 | GET | /payslips/:id/pdf | generate/download PDF | HR_PAYROLL_USER+ (self for EMPLOYEE) |
+| GET | /payslips/:id/trace | PayTrace: per-rule computation explanation | HR_PAYROLL_USER+ (self for EMPLOYEE) |
+
+## Innovation Layer (see API_CONTRACT.md §12 for shapes)
+| Method | Path | Purpose | Role |
+|---|---|---|---|
+| GET | /payruns/:id/preflight | read-only validation run, callable before/after Compute | HR_PAYROLL_USER+ |
+| POST | /payruns/:id/simulate | hypothetical rule-override run via the real rule engine; persists nothing | HR_PAYROLL_MANAGER+ |
 
 ## Dashboard
 | Method | Path | Purpose | Role |
