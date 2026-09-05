@@ -348,9 +348,11 @@ relevant view. A visible disclosure states that payroll calculations are
 deterministic and are not performed by AI.
 
 Available on the Payrun detail page for
-`HR_PAYROLL_USER`/`HR_PAYROLL_MANAGER`/`ADMIN`. Configured via the
-optional `ANTHROPIC_API_KEY` (see `.env.example`); the Payslip-level
-companion is **Explain in Simple Language** on the PayTrace view.
+`HR_PAYROLL_USER`/`HR_PAYROLL_MANAGER`/`ADMIN`. Configured via a single
+pluggable provider — `AI_PROVIDER` (`gemini` by default, or `anthropic`)
+plus that provider's API key (see `.env.example`); the same provider
+powers the Payslip-level **Explain in Simple Language** on the PayTrace
+view.
 
 ---
 

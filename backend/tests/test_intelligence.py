@@ -79,6 +79,8 @@ class _FakeResponse:
 
 
 def _mock_provider(monkeypatch, payload):
+    # Force the Anthropic path so the wire-format FakeResponse below matches.
+    monkeypatch.setattr(settings, "AI_PROVIDER", "anthropic")
     monkeypatch.setattr(settings, "ANTHROPIC_API_KEY", "fake-key-for-test")
     monkeypatch.setattr(httpx, "post", lambda *a, **k: _FakeResponse(payload))
 
@@ -111,7 +113,9 @@ def test_evidence_fingerprint_is_deterministic(client, db_session):
 
 # --------------------------------------------------------------- fallback
 def test_brief_without_api_key_is_deterministic_fallback(client, db_session, monkeypatch):
+    monkeypatch.setattr(settings, "AI_PROVIDER", "anthropic")
     monkeypatch.setattr(settings, "ANTHROPIC_API_KEY", None)
+    monkeypatch.setattr(settings, "GEMINI_API_KEY", None)
     token = _payroll_manager_token(client, db_session)
     _, _, payrun = _computed_payrun(client, token, db_session)
 
@@ -167,6 +171,34 @@ def test_valid_brief_is_accepted_and_grounded(client, db_session, monkeypatch):
     assert len(data["observations"]) == 1
     assert data["observations"][0]["source_type"] == "PAYROLL"
     assert data["observations"][0]["source_code"] == "TOTAL_NET"
+
+
+def test_gemini_provider_path_is_wired(client, db_session, monkeypatch):
+    """AI_PROVIDER=gemini uses the Gemini wire format end to end."""
+    token = _payroll_manager_token(client, db_session)
+    _, _, payrun = _computed_payrun(client, token, db_session)
+    pr = db_session.query(Payrun).filter(Payrun.id == payrun["id"]).first()
+    net_src = next(s for s in intelligence.build_brief_evidence(db_session, pr)["sources"] if s["code"] == "TOTAL_NET")
+
+    class _Gemini:
+        status_code = 200
+        def raise_for_status(self): pass
+        def json(self):
+            return {"candidates": [{"content": {"parts": [{"text": _json.dumps({
+                "headline": "Gemini brief", "summary": "ok", "attention_items": [],
+                "observations": [{"title": "Net", "text": net_src["label"], "source_ids": [net_src["id"]]}],
+                "suggested_review_order": [],
+            })}]}}]}
+
+    monkeypatch.setattr(settings, "AI_PROVIDER", "gemini")
+    monkeypatch.setattr(settings, "GEMINI_API_KEY", "fake-gemini-key")
+    monkeypatch.setattr(httpx, "post", lambda *a, **k: _Gemini())
+
+    data = _brief(client, token, payrun["id"]).json()
+    assert data["available"] is True
+    assert data["provider"] == "gemini"
+    assert data["headline"] == "Gemini brief"
+    assert len(data["observations"]) == 1
 
 
 def test_unknown_source_id_is_dropped(client, db_session, monkeypatch):
@@ -265,6 +297,7 @@ def test_numeric_hallucination_is_dropped(client, db_session, monkeypatch):
 def test_provider_failure_falls_back_and_never_raises(client, db_session, monkeypatch, break_it):
     token = _payroll_manager_token(client, db_session)
     _, _, payrun = _computed_payrun(client, token, db_session)
+    monkeypatch.setattr(settings, "AI_PROVIDER", "anthropic")
     monkeypatch.setattr(settings, "ANTHROPIC_API_KEY", "fake-key-for-test")
 
     if break_it == "timeout":

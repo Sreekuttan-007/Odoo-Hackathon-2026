@@ -18,13 +18,8 @@ introduce a reference to a calculation that never happened, and nothing
 it returns is ever written back as an authoritative numeric field.
 """
 import json
-from typing import Literal, Optional
-import httpx
-from app.core.config import settings
-
-ANTHROPIC_MODEL = "claude-haiku-4-5-20251001"
-ANTHROPIC_URL = "https://api.anthropic.com/v1/messages"
-TIMEOUT_SECONDS = 12.0
+from typing import Literal
+from app.services import ai_provider
 
 _SYSTEM_PROMPT = """You explain payroll calculations in clear, plain language.
 
@@ -70,7 +65,7 @@ def _unavailable(reason: str) -> dict:
 
 def explain(trace: dict, mode: Literal["employee", "payroll"] = "employee") -> dict:
     """Returns {available, reason, summary, components}. Never raises."""
-    if not settings.ANTHROPIC_API_KEY:
+    if not ai_provider.is_configured():
         return _unavailable("NOT_CONFIGURED")
 
     sanitized = _sanitize_trace_for_ai(trace, mode)
@@ -82,30 +77,11 @@ def explain(trace: dict, mode: Literal["employee", "payroll"] = "employee") -> d
     user_content = f"{persona}\n\nVerified payroll trace (JSON):\n{json.dumps(sanitized, default=str)}"
 
     try:
-        response = httpx.post(
-            ANTHROPIC_URL,
-            headers={
-                "x-api-key": settings.ANTHROPIC_API_KEY,
-                "anthropic-version": "2023-06-01",
-                "content-type": "application/json",
-            },
-            json={
-                "model": ANTHROPIC_MODEL,
-                "max_tokens": 700,
-                "system": _SYSTEM_PROMPT,
-                "messages": [{"role": "user", "content": user_content}],
-            },
-            timeout=TIMEOUT_SECONDS,
-        )
-        response.raise_for_status()
-        payload = response.json()
-        text = payload["content"][0]["text"]
+        text = ai_provider.complete_json(_SYSTEM_PROMPT, user_content, max_tokens=700)
         parsed = json.loads(text)
-    except httpx.TimeoutException:
-        return _unavailable("TIMEOUT")
-    except httpx.HTTPStatusError as exc:
-        return _unavailable("RATE_LIMITED" if exc.response.status_code == 429 else "PROVIDER_ERROR")
-    except (httpx.HTTPError, KeyError, IndexError, ValueError, TypeError):
+    except ai_provider.ProviderError as exc:
+        return _unavailable(exc.reason)
+    except (ValueError, TypeError):
         return _unavailable("MALFORMED_RESPONSE")
 
     summary = parsed.get("summary") if isinstance(parsed, dict) else None

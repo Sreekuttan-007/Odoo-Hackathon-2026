@@ -277,6 +277,7 @@ class TestPayTraceRBAC:
 
 class TestPayTraceAINarrator:
     def test_narrator_unavailable_without_api_key_never_raises(self, client, db_session, monkeypatch):
+        monkeypatch.setattr(settings, "AI_PROVIDER", "anthropic")
         monkeypatch.setattr(settings, "ANTHROPIC_API_KEY", None)
         mgr_token = _payroll_manager_token(client, db_session)
         sid = _create_full_structure(client, mgr_token)
@@ -295,6 +296,7 @@ class TestPayTraceAINarrator:
         def _raise_timeout(*args, **kwargs):
             raise httpx.TimeoutException("boom")
 
+        monkeypatch.setattr(settings, "AI_PROVIDER", "anthropic")
         monkeypatch.setattr(settings, "ANTHROPIC_API_KEY", "fake-key-for-test")
         monkeypatch.setattr(httpx, "post", _raise_timeout)
 
@@ -323,6 +325,7 @@ class TestPayTraceAINarrator:
                     ],
                 })}]}
 
+        monkeypatch.setattr(settings, "AI_PROVIDER", "anthropic")
         monkeypatch.setattr(settings, "ANTHROPIC_API_KEY", "fake-key-for-test")
         monkeypatch.setattr(httpx, "post", lambda *a, **k: FakeResponse())
 

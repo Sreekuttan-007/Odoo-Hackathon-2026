@@ -298,8 +298,9 @@
   string rather than fabricating structured numbers.
 - `GET /api/payroll/payslips/{id}/trace/explain?mode=employee|payroll`
   (Phase 7B, PayTrace AI Narrator — optional) — same access rule. Builds
-  the deterministic trace above and asks an LLM (Anthropic, called via
-  plain HTTP, gated by the optional `ANTHROPIC_API_KEY` env var) to
+  the deterministic trace above and asks an LLM (the pluggable provider —
+  `AI_PROVIDER` = `gemini` (default) | `anthropic`, gated by that
+  provider's optional API key — see `app/services/ai_provider.py`) to
   restate it in plain language. Returns `{"available": false, "reason":
   "NOT_CONFIGURED"|"TIMEOUT"|"RATE_LIMITED"|"PROVIDER_ERROR"|
   "MALFORMED_RESPONSE"}` on any failure — including no key configured —
@@ -352,9 +353,9 @@
   (findings, verbatim — severity is never re-derived) and the payrun
   totals, each fact carrying a stable `id`, a backend-owned `severity`,
   and a pre-computed number. That packet — with employee **codes** only,
-  never names/bank/IDs/contact/secrets — is sent to the provider
-  (Anthropic, gated by the optional `ANTHROPIC_API_KEY`). Every returned
-  claim is then validated: an item citing an unknown/absent source id is
+  never names/bank/IDs/contact/secrets — is sent to the pluggable
+  provider (`AI_PROVIDER` = `gemini` (default) | `anthropic`, gated by
+  that provider's optional key). Every returned claim is then validated: an item citing an unknown/absent source id is
   dropped; `priority` is normalised to the cited source's deterministic
   severity (AI cannot upgrade a WARNING to a BLOCKER); a ₹-figure not
   present verbatim in a cited source is rejected.

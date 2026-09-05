@@ -39,18 +39,12 @@ from datetime import datetime, timezone
 from decimal import Decimal, ROUND_HALF_UP
 from typing import Optional
 
-import httpx
 from sqlalchemy.orm import Session
 
-from app.core.config import settings
 from app.models.payroll import Payrun, PayrunStatus, WarningSeverity
-from app.services import preflight
+from app.services import ai_provider, preflight
 
 logger = logging.getLogger("payloom.intelligence")
-
-ANTHROPIC_MODEL = "claude-haiku-4-5-20251001"
-ANTHROPIC_URL = "https://api.anthropic.com/v1/messages"
-TIMEOUT_SECONDS = 15.0
 
 _SEVERITY_RANK = {"BLOCKER": 0, "WARNING": 1, "INFO": 2}
 _TWO = Decimal("0.01")
@@ -296,10 +290,10 @@ def _unavailable(reason: str) -> dict:
 
 
 def generate_brief(evidence: dict) -> dict:
-    """Calls the provider with the sanitised evidence. Returns either
-    {"available": True, "parsed": {...}} or {"available": False, "reason": ...}.
-    Never raises."""
-    if not settings.ANTHROPIC_API_KEY:
+    """Calls the active provider with the sanitised evidence. Returns
+    either {"available": True, "parsed": {...}} or
+    {"available": False, "reason": ...}. Never raises."""
+    if not ai_provider.is_configured():
         return _unavailable("NOT_CONFIGURED")
 
     model_input = {
@@ -324,30 +318,11 @@ def generate_brief(evidence: dict) -> dict:
     )
 
     try:
-        response = httpx.post(
-            ANTHROPIC_URL,
-            headers={
-                "x-api-key": settings.ANTHROPIC_API_KEY,
-                "anthropic-version": "2023-06-01",
-                "content-type": "application/json",
-            },
-            json={
-                "model": ANTHROPIC_MODEL,
-                "max_tokens": 1400,
-                "system": _SYSTEM_PROMPT,
-                "messages": [{"role": "user", "content": user_content}],
-            },
-            timeout=TIMEOUT_SECONDS,
-        )
-        response.raise_for_status()
-        payload = response.json()
-        text = payload["content"][0]["text"]
+        text = ai_provider.complete_json(_SYSTEM_PROMPT, user_content, max_tokens=1400)
         parsed = json.loads(text)
-    except httpx.TimeoutException:
-        return _unavailable("TIMEOUT")
-    except httpx.HTTPStatusError as exc:
-        return _unavailable("RATE_LIMITED" if exc.response.status_code == 429 else "PROVIDER_ERROR")
-    except (httpx.HTTPError, KeyError, IndexError, ValueError, TypeError):
+    except ai_provider.ProviderError as exc:
+        return _unavailable(exc.reason)
+    except (ValueError, TypeError):
         return _unavailable("MALFORMED_RESPONSE")
 
     if not isinstance(parsed, dict):
@@ -426,7 +401,7 @@ def _build_response(payrun: Payrun, evidence: dict, *, ai: Optional[dict], reaso
         "deterministic_summary": det_summary,
         "generated_at": datetime.now(timezone.utc),
         "evidence_fingerprint": evidence["fingerprint"],
-        "provider": settings.AI_PROVIDER if settings.ANTHROPIC_API_KEY else None,
+        "provider": ai_provider.active_provider_name(),
     }
 
     if ai is None:
