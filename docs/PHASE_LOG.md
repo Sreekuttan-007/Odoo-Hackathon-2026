@@ -43,6 +43,14 @@
 - **PDF**: real `reportlab`-generated PDFs from persisted, already-computed Payslip data (never recomputed) — see `app/services/payslip_pdf.py`.
 - **Deferred (explicitly, per spec)**: "Send Payslips" (no email provider configured in this environment — not faked), a Payroll Dashboard (next phase), mid-period contract-change proration, a paid/unpaid leave distinction (TimeOffType has no such flag yet — `approved_leave_days` context is exposed but unused by the seeded rules), and any statutory/compliance claim (PF/PT rules are calculation examples only).
 
+## Phase 12: Judge-Proof Demo, Pitch & Presentation Engineering
+- **Status**: DONE (documentation phase — no product scope reopened)
+- **Deliverables**: `docs/FINAL_DEMO_SCRIPT.md`, `docs/JUDGE_QA.md`, `docs/DEMO_CHECKLIST.md`, `docs/PS_MAPPING.md`, `docs/CLAIMS_MATRIX.md`, `docs/ARCHITECTURE_DEMO.md`, `docs/screenshots/*` (7 backup screenshots).
+- **Demo route**: `/dashboard` → `/employees/4` (Dave) + Aarav contracts → `/attendance?employee_id=4` + time off → `/payroll/salary-structures/1` → Payrun wizard → `PR/2026/0005` Compute → PayTrace (`/payroll/payslips/…/trace`) → `PR/2026/0004` Preflight blocker → `/payroll/simulator` (Regular Salary · Nov 2026 · Dave · HRA 20→25) → `PR/2026/0003` Generate Payroll Brief → `PR/2026/0005` Validate → Mark Paid → PDF → close. Target ~5:00.
+- **Pre-staged Neon data**: `PR/2026/0005` DRAFT (Dave, Dec 2026), `PR/2026/0004` COMPUTED (Dave, Oct 2026 — Preflight-blocker demo, armed by a reversible contract `end_date` PATCH), `PR/2026/0003` COMPUTED (Dave, Sep 2026, ₹29,500). Existing `PR/2026/0001`/`0002` PAID for the PDF path.
+- **Smallest-necessary reliability fix** (demo quality, not a feature): `intelligence._build_response` demotes any AI attention item whose cited sources have no BLOCKER/WARNING severity to Observations, so a clean Payrun's brief doesn't show payroll totals under "Needs Attention". +1 test. 201 backend tests pass.
+- **Not done**: human spoken-delivery rehearsal (spec §57 — the agent can't rehearse). The script + checklist are ready for the team's 3 timed dry runs.
+
 ## Phases 6–9
 - Phase 6 (design system: motion + semantic status colors), Phase 7 (PayTrace + optional AI narrator), Phase 8 (Payroll Preflight), Phase 8.5 (Neon migration), Phase 9 (Payroll Simulator) — see `docs/BUILD_STATUS.md` for the per-phase detail; commit history has the diffs (`git log --grep "Phase"`).
 

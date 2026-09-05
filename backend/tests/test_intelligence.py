@@ -272,6 +272,27 @@ def test_severity_cannot_be_upgraded_by_ai(client, db_session, monkeypatch):
     assert data["attention_items"][0]["priority"] == "WARNING"
 
 
+def test_severityless_attention_item_is_demoted_to_observation(client, db_session, monkeypatch):
+    """A PAYROLL total the model files under attention_items has no
+    deterministic severity, so it belongs in observations, not
+    "Needs Attention"."""
+    token = _payroll_manager_token(client, db_session)
+    _, _, payrun = _computed_payrun(client, token, db_session)
+    pr = db_session.query(Payrun).filter(Payrun.id == payrun["id"]).first()
+    net_src = next(s for s in intelligence.build_brief_evidence(db_session, pr)["sources"] if s["code"] == "TOTAL_NET")
+
+    _mock_provider(monkeypatch, {
+        "headline": "Brief", "summary": "…",
+        "attention_items": [
+            {"title": "Review net", "text": net_src["label"], "source_ids": [net_src["id"]]},
+        ],
+        "observations": [], "suggested_review_order": [],
+    })
+    data = _brief(client, token, payrun["id"]).json()
+    assert data["attention_items"] == []
+    assert any(o["source_code"] == "TOTAL_NET" for o in data["observations"])
+
+
 def test_numeric_hallucination_is_dropped(client, db_session, monkeypatch):
     token = _payroll_manager_token(client, db_session)
     _, _, payrun = _computed_payrun(client, token, db_session)

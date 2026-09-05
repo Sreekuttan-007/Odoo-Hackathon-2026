@@ -428,6 +428,15 @@ def _build_response(payrun: Payrun, evidence: dict, *, ai: Optional[dict], reaso
     review = _validate_items(parsed.get("suggested_review_order"), registry, evidence)
     review.sort(key=lambda i: _SEVERITY_RANK.get(i.get("priority"), 9))
 
+    # "Needs Attention" means an actual BLOCKER/WARNING finding. If the model
+    # files a severity-less item (a payroll total, an INFO note) there, move
+    # it to Observations — the deterministic severity decides placement, not
+    # the model's choice of bucket.
+    demoted = [i for i in attention if i.get("priority") not in ("BLOCKER", "WARNING")]
+    attention = [i for i in attention if i.get("priority") in ("BLOCKER", "WARNING")]
+    attention.sort(key=lambda i: _SEVERITY_RANK.get(i.get("priority"), 9))
+    observations = demoted + observations
+
     headline = str(parsed.get("headline") or f"{payrun.reference} — payroll brief")[:160]
     summary = str(parsed.get("summary") or det_summary).strip()[:1200]
     return {
