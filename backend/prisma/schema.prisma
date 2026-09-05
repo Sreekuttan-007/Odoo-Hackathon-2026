@@ -1,0 +1,131 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Canonical roles — see docs/API_CONTRACT.md §1. Never invent a synonym.
+enum RoleName {
+  EMPLOYEE
+  HR_MANAGER
+  HR_PAYROLL_USER
+  HR_PAYROLL_MANAGER
+  ADMIN
+}
+
+// Phase 1 supersedes Phase 0's 2-value EmployeeActiveStatus with this 3-value
+// set, per the Phase 1 spec. Documented in docs/API_CONTRACT.md change log.
+enum EmployeeStatus {
+  ACTIVE
+  INACTIVE
+  TERMINATED
+}
+
+// Kept to the 3 values already established in Phase 0 (DATABASE_SCHEMA.md).
+// INTERN was considered (Phase 1 spec lists it as a possible value) but
+// omitted for MVP simplicity — documented, not silently decided.
+enum EmployeeType {
+  FULL_TIME
+  PART_TIME
+  CONTRACTOR
+}
+
+// New in Phase 1: a coarse status standing in for full bank-detail fields
+// (account number/IFSC/etc.), which are deferred to a later phase. Feeds the
+// "missing bank details" payroll validation warning (PAYROLL_ENGINE.md §I).
+enum BankDetailsStatus {
+  MISSING
+  PROVIDED
+}
+
+// Modeled as its own table (not an enum on User) per the Phase 1 spec's
+// explicit entity list — a documented refinement of Phase 0's original
+// "enum on User" simplification.
+model Role {
+  id          String     @id @default(uuid())
+  name        RoleName   @unique
+  description String?
+  users       User[]
+  createdAt   DateTime   @default(now()) @map("created_at")
+  updatedAt   DateTime   @updatedAt @map("updated_at")
+
+  @@map("roles")
+}
+
+model User {
+  id           String    @id @default(uuid())
+  email        String    @unique
+  passwordHash String    @map("password_hash")
+  roleId       String    @map("role_id")
+  role         Role      @relation(fields: [roleId], references: [id])
+  employeeId   String?   @unique @map("employee_id")
+  employee     Employee? @relation(fields: [employeeId], references: [id])
+  isActive     Boolean   @default(true) @map("is_active")
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
+
+  @@map("users")
+}
+
+model Department {
+  id           String        @id @default(uuid())
+  name         String        @unique
+  code         String        @unique
+  description  String?
+  isActive     Boolean       @default(true) @map("is_active")
+  employees    Employee[]
+  jobPositions JobPosition[]
+  createdAt    DateTime      @default(now()) @map("created_at")
+  updatedAt    DateTime      @updatedAt @map("updated_at")
+
+  @@map("departments")
+}
+
+model JobPosition {
+  id           String     @id @default(uuid())
+  title        String
+  code         String     @unique
+  departmentId String     @map("department_id")
+  department   Department @relation(fields: [departmentId], references: [id])
+  description  String?
+  isActive     Boolean    @default(true) @map("is_active")
+  employees    Employee[]
+  createdAt    DateTime   @default(now()) @map("created_at")
+  updatedAt    DateTime   @updatedAt @map("updated_at")
+
+  @@map("job_positions")
+}
+
+model Employee {
+  id                String            @id @default(uuid())
+  // Renamed from Phase 0's `employee_number` to `employee_code` per the
+  // Phase 1 spec. Documented in docs/API_CONTRACT.md change log.
+  employeeCode      String            @unique @map("employee_code")
+  firstName         String            @map("first_name")
+  lastName          String            @map("last_name")
+  email             String            @unique
+  phone             String?
+  departmentId      String            @map("department_id")
+  department        Department        @relation(fields: [departmentId], references: [id])
+  jobPositionId     String            @map("job_position_id")
+  jobPosition       JobPosition       @relation(fields: [jobPositionId], references: [id])
+  managerId         String?           @map("manager_id")
+  manager           Employee?         @relation("EmployeeManager", fields: [managerId], references: [id])
+  directReports     Employee[]        @relation("EmployeeManager")
+  employeeType      EmployeeType      @map("employee_type")
+  joinDate          DateTime          @map("join_date")
+  bankDetailsStatus BankDetailsStatus @default(MISSING) @map("bank_details_status")
+  status            EmployeeStatus    @default(ACTIVE)
+  user              User?
+  createdAt         DateTime          @default(now()) @map("created_at")
+  updatedAt         DateTime          @updatedAt @map("updated_at")
+
+  // working_schedule_id intentionally NOT added yet — WorkingSchedule does
+  // not exist until Phase 2. See Phase 1 spec §17: "avoid fake foreign keys
+  // to tables that do not exist yet."
+
+  @@map("employees")
+}

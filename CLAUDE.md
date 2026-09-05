@@ -7,11 +7,18 @@ as one connected system — not disconnected CRUD pages.
 
 ## Current Status
 
-**Phase 0 (Architecture & Rules) is complete.** No application code exists yet.
-Do not scaffold the frontend/backend, install packages, create migrations, add
-API routes, or build UI components until a human explicitly approves moving to
-Phase 1. If asked to "start building," confirm which phase is being started
-and check it against the phase plan below first.
+**Phase 0 (Architecture & Rules) is complete.** **Phase 1 (Backend
+Foundation) is implemented on branch `feature/backend-foundation`**, not
+merged to `main` — awaiting review. It covers: backend project init, env
+config, Postgres via Prisma, migrations, `Role`/`User`/`Department`/
+`JobPosition`/`Employee` tables, JWT auth (`/auth/login`, `/auth/me`), RBAC
+middleware, Employee/Department/Job Position CRUD, deterministic seed data
+(`backend/prisma/seed.ts`), and a passing test suite (`backend/tests/`,
+run via `npm test` in `backend/`). See `backend/README.md` for setup/run/test
+commands. No payroll logic exists yet (Contracts, Schedules, Attendance, Time
+Off, Salary Structures/Rules, Payruns, Payslips, Dashboard, PDF/email, and the
+Innovation Layer are all still Phase 2+ per the plan below) — do not start
+that work until a human reviews Phase 1 and approves Phase 2.
 
 Full Phase 0 documentation lives in `docs/`:
 - `REQUIREMENTS.md` — problem statement, roles/permission matrix, documented ambiguities
@@ -22,12 +29,71 @@ Full Phase 0 documentation lives in `docs/`:
 - `ATTENDANCE_RULES.md` — worked-hours/exception derivation, corrections
 - `LEAVE_RULES.md` — allocation/balance derivation, approval idempotency
 - `SALARY_RULE_ENGINE.md` — computation types, sequencing, safe formulas, historical stability
-- `PAYROLL_ENGINE.md` — module layout, core functions, validation matrix
+- `PAYROLL_ENGINE.md` — module layout, core functions, validation matrix, Innovation Layer design
 - `PAYRUN_STATE_MACHINE.md` — legal states/transitions, duplicate protection
-- `API_PLAN.md` — endpoint inventory by module
+- `API_PLAN.md` — endpoint inventory by module (index; see API_CONTRACT.md for shapes)
+- `API_CONTRACT.md` — **the binding frontend/backend contract**: canonical enums, request/response JSON per endpoint, change log
 - `DEMO_FLOW.md` — the two rehearsed end-to-end demo scenarios + seed data
 - `MVP_SCOPE.md` — P0/P1/P2/do-not-build
 - `RISKS.md` — risk register and mitigations
+
+## Parallel Development — Two Agents, One Repo
+
+This project is built by two agents in parallel: **Claude (this agent)** owns
+the backend/system-of-truth; **Antigravity** (a separate developer's agent)
+owns the frontend. Full protocol below; keep to it on every phase.
+
+**Ownership boundary:**
+```
+ANTIGRAVITY (frontend/presentation) --HTTP/REST--> CLAUDE (API contracts)
+                                                        -> business services -> database
+```
+- `backend/` is Claude-owned. `frontend/` is Antigravity-owned. `docs/` is
+  shared, but Claude owns the business/API documentation within it
+  (`API_CONTRACT.md` above all).
+- Claude does not redesign or rebuild the frontend. If a frontend change is
+  needed, **describe it and stop** — do not silently edit `frontend/` files.
+- Frontend mock data is never the source of truth for behavior (a mocked "Net
+  Salary = ₹57,000" defines nothing) — the payroll engine, contract
+  selection, leave balance, salary rule execution, Payrun state, validation
+  warnings, PayTrace, Preflight, and Simulator results all originate from
+  backend business logic exclusively.
+- Canonical enum names live in `API_CONTRACT.md` §1 — never invent a
+  synonym (e.g. `VALIDATED` vs `APPROVED`, `MISSING_CHECKOUT` vs
+  `MISSING_CHECK_OUT`); the frontend mirrors these exact strings.
+
+**Before starting backend work in a phase**, identify: which files/dirs will
+be touched, whether any are frontend-owned, which API contracts/enums are
+affected, and any schema/migration impact. If frontend-owned files need
+changes, stop and report the required change instead of making it.
+
+**After finishing backend work in a phase**, report:
+1. Backend Changes — what was implemented
+2. Files Changed — exact paths
+3. Business Rules Added — new behavior
+4. API Contract Changes — endpoints added/modified (and the matching
+   `API_CONTRACT.md` edit + its change-log row)
+5. Frontend Integration Notes — what Antigravity needs to connect
+6. New/Changed Enums — canonical values
+7. Known Limitations — anything incomplete
+8. Tests — what ran, results
+9. Next Safe Parallel Task — what Antigravity can do without conflicting
+
+**Recommended stabilization order** (define contract → tell frontend →
+replace mock data → integration test, module by module): Employees →
+Contracts → Schedules → Attendance → Time Off → Salary Configuration →
+Payruns → Payslips → Preflight/PayTrace/Simulator → Dashboard.
+
+## Innovation Layer (Additive to the Original Spec)
+
+Three payroll-intelligence features beyond the base requirements, all
+designed to **reuse the real Salary Rule Engine — never a second/fake
+calculation path** (see `PAYROLL_ENGINE.md` §Innovation Layer,
+`API_CONTRACT.md` §12):
+
+- **PayTrace** — explains how a Payslip's numbers were produced, step by step, reusing the same computation context already built during Compute.
+- **Payroll Preflight** — read-only validation run (the same Validation Matrix used by real `Validate`), callable before or after Compute, never mutates state.
+- **Payroll Simulator** — previews a hypothetical Salary Rule change via the real rule engine against an in-memory override; never persists to `SalaryRule`, `Payslip`, `Payrun`, or `Contract`.
 
 ## Non-Negotiable Invariants
 
