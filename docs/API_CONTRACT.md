@@ -124,3 +124,66 @@
   still open — it is never faked.
 - All timestamps are UTC. "Today" and each record's `attendance_date` are
   computed in the company timezone (`Asia/Kolkata`), not UTC midnight.
+
+## Time Off Types
+- `GET /api/time-off/types?search=&is_active=&unit=`
+- `GET /api/time-off/types/{id}`
+- `POST /api/time-off/types` (HR-capable) — `{name, code?, unit, requires_allocation, approval_policy, is_active, display_color?, notes?}`
+- `PATCH /api/time-off/types/{id}` (HR-capable) — changing `unit` is rejected
+  (`409 UNIT_LOCKED`) once any Allocation or Request references the type.
+
+## Time Off Allocations
+- `GET /api/time-off/allocations?employee_id=&time_off_type_id=&status=` —
+  `EMPLOYEE`-role callers are always scoped to their own allocations.
+- `GET /api/time-off/allocations/{id}` — `403` if not HR-capable and not the
+  allocation's own employee.
+- `POST /api/time-off/allocations` (HR-capable) — `{employee_id,
+  time_off_type_id, allocated_amount, valid_from, valid_to, description?}`.
+  Always created `TO_APPROVE`; `taken_amount`/`remaining_amount` are never
+  client-supplied.
+- `PATCH /api/time-off/allocations/{id}` (HR-capable) — only while
+  `TO_APPROVE` (`409 ALREADY_DECIDED` otherwise).
+- `POST /api/time-off/allocations/{id}/approve` (HR-capable) — rejects if
+  not `TO_APPROVE` (`409 ALREADY_DECIDED`) or if another APPROVED
+  allocation for the same employee/type already covers an overlapping
+  period (`409 ALLOCATION_OVERLAP`).
+- `POST /api/time-off/allocations/{id}/refuse` (HR-capable).
+- `taken_amount`/`remaining_amount` are always derived: the sum of
+  `duration_amount` across APPROVED requests linked to the allocation, and
+  the difference from `allocated_amount`. Non-APPROVED allocations always
+  report `0`/`0`.
+
+## Time Off Requests
+- `GET /api/time-off/requests?employee_id=&time_off_type_id=&status=` —
+  `EMPLOYEE`-role callers are always scoped to their own requests.
+- `GET /api/time-off/requests/{id}` — `403` if not HR-capable and not the
+  request's own employee.
+- `POST /api/time-off/requests` — self-service; `EMPLOYEE`-role callers may
+  not set `employee_id` to another employee (`403 ACCESS_DENIED`).
+  `{employee_id?, time_off_type_id, start_date, end_date, reason?}`.
+  `duration_amount` is computed server-side (see docs/DOMAIN_TERMS.md) and
+  stored as a snapshot. Errors: `400 TYPE_INACTIVE`, `400
+  NO_WORKING_SCHEDULE`, `400 NO_WORKING_DAYS`, `404 NO_ALLOCATION`, `409
+  AMBIGUOUS_ALLOCATION`, `409 INSUFFICIENT_BALANCE`, `409 REQUEST_OVERLAP`.
+- `PATCH /api/time-off/requests/{id}` — owner or HR-capable, only while
+  `TO_APPROVE` (`409 ALREADY_DECIDED` otherwise). Re-runs full duration/
+  allocation/overlap validation when dates change.
+- `POST /api/time-off/requests/{id}/approve` (HR-capable) — `403
+  SELF_APPROVAL` if the caller is the request's own employee (even ADMIN);
+  `409 ALREADY_DECIDED` if not `TO_APPROVE`; `404 NO_ALLOCATION` / `409
+  INSUFFICIENT_BALANCE` re-checked at approval time for allocation-backed
+  types.
+- `POST /api/time-off/requests/{id}/refuse` (HR-capable) — same
+  self-approval/already-decided guards; consumes no balance.
+- `balance` in the response is `null` unless the request is linked to an
+  allocation; otherwise it reports `{allocation_id, before, consumed,
+  remaining}` reflecting the allocation's state after this request's
+  current status is applied.
+
+## Time Off Balance
+- `GET /api/time-off/balance?employee_id=&time_off_type_id=&on_date=` —
+  `EMPLOYEE`-role callers may only query their own balance
+  (`403 ACCESS_DENIED` otherwise). Returns the APPROVED allocation covering
+  `on_date` (default today), or all-zero if none exists.
+- Employee responses also include `time_off_requests_count` (real, computed
+  from stored Time Off Requests).

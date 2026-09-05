@@ -34,3 +34,10 @@ export function formatMinutes(minutes: number | null): string {
   const m = minutes % 60;
   return `${h}h ${String(m).padStart(2, '0')}m`;
 }
+
+export function formatAmount(amount: string, unit: 'DAYS' | 'HOURS'): string {
+  const n = parseFloat(amount);
+  const trimmed = Number.isInteger(n) ? String(n) : n.toFixed(2);
+  const noun = unit === 'DAYS' ? 'day' : 'hour';
+  return `${trimmed} ${noun}${n === 1 ? '' : 's'}`;
+}

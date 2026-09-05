@@ -8,9 +8,13 @@ from app.models.job_position import JobPosition
 from app.models.working_schedule import WorkingSchedule, WorkingScheduleLine, ScheduleStatus, DayOfWeek
 from app.models.contract import Contract
 from app.models.attendance import Attendance
+from app.models.time_off import (
+    TimeOffType, TimeOffAllocation, TimeOffRequest,
+    TimeOffUnit, ApprovalPolicy, AllocationStatus, RequestStatus,
+)
 from app.core.security import get_password_hash
 from app.db.base import Base
-from app.services import contract_rules, attendance_rules
+from app.services import contract_rules, attendance_rules, time_off_rules
 
 
 def seed_db():
@@ -172,6 +176,88 @@ def seed_db():
     )
 
     db.add_all([dave_yesterday, aarav_completed, aarav_missing_checkout])
+    db.commit()
+
+    # --- Time Off Types ---
+    type_pto = TimeOffType(
+        name="Paid Time Off", code="PTO", unit=TimeOffUnit.DAYS,
+        requires_allocation=True, approval_policy=ApprovalPolicy.MANAGER,
+        is_active=True, display_color="#4f46e5",
+        notes="Annual paid leave balance, granted at the start of the policy year.",
+    )
+    type_sick = TimeOffType(
+        name="Sick Leave", code="SICK", unit=TimeOffUnit.DAYS,
+        requires_allocation=False, approval_policy=ApprovalPolicy.MANAGER,
+        is_active=True, display_color="#dc2626",
+        notes="No allocation required — self-certified, manager-approved.",
+    )
+    type_compoff = TimeOffType(
+        name="Comp Off", code="COMPOFF", unit=TimeOffUnit.HOURS,
+        requires_allocation=True, approval_policy=ApprovalPolicy.HR,
+        is_active=True, display_color="#0891b2",
+        notes="Hourly compensatory leave granted for extra hours worked.",
+    )
+    db.add_all([type_pto, type_sick, type_compoff])
+    db.commit()
+
+    # --- Allocations ---
+    # Aarav: the organizer-example numbers (docs/PHASE_LOG.md manual demo) —
+    # 20 allocated, 5 already taken (see the APPROVED request below), 15
+    # remaining. This is also the exact balance-math test case from the
+    # Phase 4 spec (section 73): a further 3-day approval should land at
+    # taken=8 / remaining=12.
+    aarav_pto_allocation = TimeOffAllocation(
+        employee_id=emp_aarav.id, time_off_type_id=type_pto.id,
+        allocated_amount=20, valid_from=date(2026, 1, 1), valid_to=date(2026, 12, 31),
+        status=AllocationStatus.APPROVED, approver_user_id=user_hr.id, approved_at=attendance_rules.now_utc(),
+        description="2026 Annual Balance",
+    )
+    # Dave (the EMPLOYEE-role demo login) gets a fresh, untouched allocation
+    # so the live self-service "create a request" demo has real balance to
+    # consume, independent of Aarav's history.
+    dave_pto_allocation = TimeOffAllocation(
+        employee_id=emp_staff.id, time_off_type_id=type_pto.id,
+        allocated_amount=12, valid_from=date(2026, 1, 1), valid_to=date(2026, 12, 31),
+        status=AllocationStatus.APPROVED, approver_user_id=user_hr.id, approved_at=attendance_rules.now_utc(),
+        description="2026 Annual Balance",
+    )
+    db.add_all([aarav_pto_allocation, dave_pto_allocation])
+    db.flush()
+
+    # A still-pending allocation, so the Allocations list/detail Approve/Refuse
+    # flow has a real example to demo without touching the balances above.
+    eve_compoff_allocation = TimeOffAllocation(
+        employee_id=emp_unlinked.id, time_off_type_id=type_compoff.id,
+        allocated_amount=16, valid_from=date(2026, 1, 1), valid_to=date(2026, 12, 31),
+        status=AllocationStatus.TO_APPROVE,
+        description="Compensatory hours for Q3 project crunch.",
+    )
+    db.add(eve_compoff_allocation)
+    db.commit()
+
+    # --- Requests ---
+    # Aarav's already-consumed 5 working days (Mon 5 Jan – Fri 9 Jan 2026,
+    # against his 40 Hours/Week schedule) — pre-approved history.
+    aarav_pto_request = TimeOffRequest(
+        employee_id=emp_aarav.id, time_off_type_id=type_pto.id,
+        start_date=date(2026, 1, 5), end_date=date(2026, 1, 9), duration_amount=5,
+        status=RequestStatus.APPROVED, approver_user_id=user_hr.id, approved_at=attendance_rules.now_utc(),
+        allocation_id=aarav_pto_allocation.id, reason="Family trip.",
+    )
+
+    # A pending request for Dave, dated a couple of weeks out on the next
+    # working day — a live example for the Approve/Refuse demo that needs
+    # no allocation (Sick Leave doesn't require one).
+    demo_date = attendance_rules.today_in_company_tz() + timedelta(days=14)
+    while demo_date.weekday() >= 5:
+        demo_date += timedelta(days=1)
+    dave_sick_request = TimeOffRequest(
+        employee_id=emp_staff.id, time_off_type_id=type_sick.id,
+        start_date=demo_date, end_date=demo_date, duration_amount=1,
+        status=RequestStatus.TO_APPROVE, reason="Doctor's appointment.",
+    )
+
+    db.add_all([aarav_pto_request, dave_sick_request])
     db.commit()
 
     print("Seeding complete.")

@@ -13,6 +13,12 @@ import { WorkingSchedules } from './pages/WorkingSchedules';
 import { WorkingScheduleForm } from './pages/WorkingScheduleForm';
 import { AttendancePage } from './pages/Attendance';
 import { AttendanceDetail } from './pages/AttendanceDetail';
+import { TimeOffTypes } from './pages/TimeOffTypes';
+import { TimeOffTypeDetail } from './pages/TimeOffTypeDetail';
+import { Allocations } from './pages/Allocations';
+import { AllocationDetail } from './pages/AllocationDetail';
+import { TimeOffRequests } from './pages/TimeOffRequests';
+import { TimeOffRequestDetail } from './pages/TimeOffRequestDetail';
 
 // Placeholder Pages
 const Placeholder = ({ title }: { title: string }) => (
@@ -47,9 +53,12 @@ function App() {
             <Route path="attendance/:attendanceId" element={<AttendanceDetail />} />
             
             <Route path="time-off">
-              <Route path="requests" element={<Placeholder title="Time Off Requests" />} />
-              <Route path="allocations" element={<Placeholder title="Time Off Allocations" />} />
-              <Route path="types" element={<Placeholder title="Time Off Types" />} />
+              <Route path="requests" element={<TimeOffRequests />} />
+              <Route path="requests/:requestId" element={<TimeOffRequestDetail />} />
+              <Route path="allocations" element={<Allocations />} />
+              <Route path="allocations/:allocationId" element={<AllocationDetail />} />
+              <Route path="types" element={<TimeOffTypes />} />
+              <Route path="types/:typeId" element={<TimeOffTypeDetail />} />
             </Route>
             
             <Route path="payroll">

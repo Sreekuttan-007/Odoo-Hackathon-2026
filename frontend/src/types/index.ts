@@ -15,6 +15,11 @@ export type ContractStatus = 'RUNNING' | 'UPCOMING' | 'EXPIRED';
 
 export type AttendanceStatus = 'ACTIVE' | 'MISSING_CHECKOUT' | 'COMPLETED';
 
+export type TimeOffUnit = 'DAYS' | 'HOURS';
+export type ApprovalPolicy = 'NONE' | 'MANAGER' | 'HR';
+export type AllocationStatus = 'DRAFT' | 'TO_APPROVE' | 'APPROVED' | 'REFUSED';
+export type TimeOffRequestStatus = 'TO_APPROVE' | 'APPROVED' | 'REFUSED';
+
 export type DayOfWeek =
   | 'MONDAY'
   | 'TUESDAY'
@@ -98,6 +103,7 @@ export interface Employee {
   working_schedule: WorkingScheduleSummary | null;
   contracts_count: number;
   attendance_count: number;
+  time_off_requests_count: number;
   created_at: string;
   updated_at: string | null;
 }
@@ -140,4 +146,76 @@ export interface Contract {
   salary_structure_note: string | null;
   created_at: string;
   updated_at: string | null;
+}
+
+export interface TimeOffType {
+  id: number;
+  name: string;
+  code: string | null;
+  unit: TimeOffUnit;
+  requires_allocation: boolean;
+  approval_policy: ApprovalPolicy;
+  is_active: boolean;
+  display_color: string | null;
+  notes: string | null;
+  created_at: string;
+  updated_at: string | null;
+}
+
+export interface TimeOffTypeMinimal {
+  id: number;
+  name: string;
+  unit: TimeOffUnit;
+  requires_allocation: boolean;
+  is_active: boolean;
+}
+
+export interface TimeOffAllocation {
+  id: number;
+  employee: EmployeeMinimal;
+  time_off_type: TimeOffTypeMinimal;
+  allocated_amount: string;
+  taken_amount: string;
+  remaining_amount: string;
+  valid_from: string;
+  valid_to: string;
+  status: AllocationStatus;
+  approver_name: string | null;
+  approved_at: string | null;
+  description: string | null;
+  created_at: string;
+  updated_at: string | null;
+}
+
+export interface AllocationBalanceSnapshot {
+  allocation_id: number;
+  before: string;
+  consumed: string;
+  remaining: string;
+}
+
+export interface TimeOffRequest {
+  id: number;
+  employee: EmployeeMinimal;
+  time_off_type: TimeOffTypeMinimal;
+  start_date: string;
+  end_date: string;
+  duration_amount: string;
+  status: TimeOffRequestStatus;
+  reason: string | null;
+  approver_name: string | null;
+  approved_at: string | null;
+  refused_at: string | null;
+  allocation_id: number | null;
+  balance: AllocationBalanceSnapshot | null;
+  created_at: string;
+  updated_at: string | null;
+}
+
+export interface TimeOffBalance {
+  allocation_id: number | null;
+  unit: TimeOffUnit;
+  allocated: string;
+  taken: string;
+  remaining: string;
 }

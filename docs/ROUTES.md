@@ -19,8 +19,13 @@
 /attendance/:attendanceId
 
 /time-off/requests
+/time-off/requests?employee_id=:id
+/time-off/requests/:requestId
 /time-off/allocations
+/time-off/allocations?employee_id=:id
+/time-off/allocations/:allocationId
 /time-off/types
+/time-off/types/:typeId
 
 /payroll/payruns
 /payroll/payslips

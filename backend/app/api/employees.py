@@ -9,6 +9,7 @@ from app.models.job_position import JobPosition
 from app.models.working_schedule import WorkingSchedule
 from app.models.contract import Contract
 from app.models.attendance import Attendance
+from app.models.time_off import TimeOffRequest
 from app.models.user import User
 from app.schemas.employee import EmployeeResponse, EmployeeCreate, EmployeeUpdate, EmployeeMinimal
 from app.schemas.department import DepartmentResponse
@@ -50,7 +51,7 @@ def _validate_relations(
             raise HTTPException(400, detail={"error": {"code": "NOT_FOUND", "message": "Manager not found."}})
 
 
-def _build_response(employee: Employee, contracts_count: int, attendance_count: int = 0) -> EmployeeResponse:
+def _build_response(employee: Employee, contracts_count: int, attendance_count: int = 0, time_off_requests_count: int = 0) -> EmployeeResponse:
     return EmployeeResponse(
         id=employee.id,
         employee_code=employee.employee_code,
@@ -69,6 +70,7 @@ def _build_response(employee: Employee, contracts_count: int, attendance_count: 
         working_schedule=build_schedule_summary(employee.working_schedule),
         contracts_count=contracts_count,
         attendance_count=attendance_count,
+        time_off_requests_count=time_off_requests_count,
         created_at=employee.created_at,
         updated_at=employee.updated_at,
     )
@@ -77,7 +79,8 @@ def _build_response(employee: Employee, contracts_count: int, attendance_count: 
 def _to_response(db: Session, employee: Employee) -> EmployeeResponse:
     contracts_count = db.query(Contract).filter(Contract.employee_id == employee.id).count()
     attendance_count = db.query(Attendance).filter(Attendance.employee_id == employee.id).count()
-    return _build_response(employee, contracts_count, attendance_count)
+    time_off_requests_count = db.query(TimeOffRequest).filter(TimeOffRequest.employee_id == employee.id).count()
+    return _build_response(employee, contracts_count, attendance_count, time_off_requests_count)
 
 
 @router.get("/employees", response_model=List[EmployeeResponse])
@@ -119,8 +122,16 @@ def list_employees(
     attendance_counts = dict(
         db.query(Attendance.employee_id, func.count(Attendance.id)).group_by(Attendance.employee_id).all()
     )
+    time_off_counts = dict(
+        db.query(TimeOffRequest.employee_id, func.count(TimeOffRequest.id)).group_by(TimeOffRequest.employee_id).all()
+    )
     return [
-        _build_response(employee, contract_counts.get(employee.id, 0), attendance_counts.get(employee.id, 0))
+        _build_response(
+            employee,
+            contract_counts.get(employee.id, 0),
+            attendance_counts.get(employee.id, 0),
+            time_off_counts.get(employee.id, 0),
+        )
         for employee in employees
     ]
 

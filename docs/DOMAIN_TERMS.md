@@ -146,3 +146,56 @@ compute overtime for a given day.
   an MVP simplification). A correction that would overlap another
   Attendance record for the same employee is rejected
   (`409 ATTENDANCE_OVERLAP`).
+
+## Time Off Model Decisions (Phase 4)
+- **Three-tier model**: `TimeOffType` defines policy (unit, whether an
+  allocation is required, approval policy). `TimeOffAllocation` defines
+  entitlement for one employee/type/validity period. `TimeOffRequest`
+  represents actual usage and only consumes entitlement once approved.
+- **Balance is never persisted.** `taken` is always the live sum of
+  `duration_amount` across APPROVED requests linked to an allocation;
+  `remaining = allocated_amount - taken`. Pending and refused requests
+  always contribute `0` — this is what makes double-approval structurally
+  unable to double-deduct (approving an already-APPROVED request is
+  rejected outright, `409 ALREADY_DECIDED`, before any balance math runs).
+- **Duration is a snapshot.** `TimeOffRequest.duration_amount` is computed
+  once at creation time from the employee's Working Schedule and stored —
+  not recomputed on every read — so a later schedule change can't
+  retroactively alter a historical request.
+  - `DAYS` unit: count of scheduled working days in `[start_date,
+    end_date]`, matching the employee's Working Schedule weekday lines. No
+    schedule -> documented fallback to a calendar-day count (not silently
+    guessed as "all working days").
+  - `HOURS` unit: sum of each scheduled day's expected hours from the
+    Working Schedule. No schedule -> rejected outright
+    (`400 NO_WORKING_SCHEDULE`), since there's no safe fallback for hours.
+  - A period with zero scheduled working days (e.g. a weekend-only range)
+    is rejected (`400 NO_WORKING_DAYS`), never silently zero.
+- **Allocation uniqueness**: only one APPROVED allocation per
+  (employee, time_off_type, overlapping validity period) is allowed —
+  enforced at approval time (`409 ALLOCATION_OVERLAP`), since creation
+  can precede approval by any amount of time.
+- **Allocation resolution for a request**: the one APPROVED allocation
+  whose validity period fully covers the request's `[start_date,
+  end_date]`. Zero matches -> `404 NO_ALLOCATION`; more than one (only
+  reachable from data predating the uniqueness rule) -> `409
+  AMBIGUOUS_ALLOCATION`, never silently picked.
+- **Approval is a single transaction**: re-validate the request is still
+  `TO_APPROVE`, re-resolve the allocation, re-check remaining balance
+  against `duration_amount`, then mark `APPROVED`. Self-approval is always
+  blocked (`403 SELF_APPROVAL`) regardless of role — including an HR
+  Manager approving their own request — since Employee-Manager-User
+  hierarchies aren't reliable enough yet to route to a different approver
+  automatically (documented simplification of `approval_policy`: the field
+  is stored and shown for transparency, but actual enforcement today is
+  "any HR-capable role, except never the request's own employee").
+- **Overlap protection**: an employee cannot hold two
+  `TO_APPROVE`/`APPROVED` Time Off Requests with overlapping date ranges
+  (`409 REQUEST_OVERLAP`); touching endpoints count as overlapping.
+- **Auto-approval**: a Time Off Type with `approval_policy = NONE` marks
+  new requests `APPROVED` immediately (still subject to the same balance
+  check when it requires an allocation).
+- **Deferred**: "My Team" filtering (manager hierarchy isn't reliable
+  enough yet — not faked as a no-op toggle), a Time Off dashboard,
+  multi-level approvals, accrual automation, carry-forward, public
+  holidays, and any Attendance/Payroll integration from approved leave.

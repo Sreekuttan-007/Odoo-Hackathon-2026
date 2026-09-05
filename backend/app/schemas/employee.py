@@ -54,6 +54,7 @@ class EmployeeResponse(EmployeeBase):
     working_schedule: Optional[WorkingScheduleSummary] = None
     contracts_count: int = 0
     attendance_count: int = 0
+    time_off_requests_count: int = 0
     created_at: datetime
     updated_at: Optional[datetime] = None
 

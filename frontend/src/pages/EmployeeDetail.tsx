@@ -89,7 +89,7 @@ export function EmployeeDetail() {
         </div>
 
         {/* Smart actions */}
-        <div className="mt-6 grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <div className="mt-6 grid grid-cols-3 gap-3">
           <Link
             to={`/contracts?employee_id=${employee.id}`}
             className="flex flex-col items-center justify-center gap-1 rounded-lg border border-gray-200 py-3 hover:border-brand-300 hover:bg-brand-50/50 transition-colors duration-150"
@@ -106,8 +106,14 @@ export function EmployeeDetail() {
             <span className="text-sm font-semibold text-gray-900">{employee.attendance_count}</span>
             <span className="text-xs text-gray-500">Attendance</span>
           </Link>
-          <SmartActionPlaceholder icon={PlaneTakeoff} label="Time Off" />
-          <SmartActionPlaceholder icon={FileText} label="Allocations" />
+          <Link
+            to={`/time-off/requests?employee_id=${employee.id}`}
+            className="flex flex-col items-center justify-center gap-1 rounded-lg border border-gray-200 py-3 hover:border-brand-300 hover:bg-brand-50/50 transition-colors duration-150"
+          >
+            <PlaneTakeoff className="w-4 h-4 text-brand-600" />
+            <span className="text-sm font-semibold text-gray-900">{employee.time_off_requests_count}</span>
+            <span className="text-xs text-gray-500">Time Off</span>
+          </Link>
         </div>
       </SectionCard>
 
@@ -145,16 +151,6 @@ export function EmployeeDetail() {
         onSaved={(updated) => { setEmployee(updated); push('Employee updated.'); }}
       />
       <ToastViewport toasts={toasts} />
-    </div>
-  );
-}
-
-function SmartActionPlaceholder({ icon: Icon, label }: { icon: any; label: string }) {
-  return (
-    <div className="flex flex-col items-center justify-center gap-1 rounded-lg border border-dashed border-gray-200 py-3 text-gray-300 cursor-not-allowed" title="Not available yet in this phase">
-      <Icon className="w-4 h-4" />
-      <span className="text-sm font-semibold">—</span>
-      <span className="text-xs">{label}</span>
     </div>
   );
 }

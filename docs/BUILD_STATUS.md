@@ -13,6 +13,6 @@ Track module implementation state here.
 - **Contracts**: DONE (list/detail/create, history, overlap validation, period-applicability service, money-safe wage)
 - **Working Schedules**: DONE (list/form, weekly pattern lines, derived daily/weekly hours)
 - **Attendance**: DONE (global + employee-filtered list, detail, quick Check In/Check Out widget with live elapsed display, HR correction, real derived worked-hours/overtime, one-session/day + overlap protection)
-- **Time Off**: NOT STARTED
+- **Time Off**: DONE (Types configuration, Allocations with approve/refuse and derived balance, Requests with approve/refuse and exactly-once balance consumption, employee-filtered smart action, real RBAC)
 - **Salary Structures/Rules**: NOT STARTED (Contract has a deferred `salary_structure_note` placeholder only)
 - **Payruns/Payslips**: NOT STARTED
