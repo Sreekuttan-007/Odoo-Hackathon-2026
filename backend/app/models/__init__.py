@@ -6,3 +6,4 @@ from .contract import Contract
 from .user import User
 from .attendance import Attendance
 from .time_off import TimeOffType, TimeOffAllocation, TimeOffRequest
+from .payroll import SalaryStructure, SalaryRule, Payrun, Payslip, PayslipLine, PayrollWarning

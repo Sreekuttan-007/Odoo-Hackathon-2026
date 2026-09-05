@@ -219,3 +219,137 @@ export interface TimeOffBalance {
   taken: string;
   remaining: string;
 }
+
+export type RuleCategory = 'BASIC' | 'ALLOWANCE' | 'GROSS' | 'DEDUCTION' | 'NET';
+export type ComputationMethod = 'FIXED' | 'PERCENTAGE' | 'FORMULA';
+export type PayrunStatus = 'DRAFT' | 'COMPUTED' | 'VALIDATED' | 'PAID';
+export type WarningSeverity = 'BLOCKER' | 'WARNING' | 'INFO';
+
+export interface SalaryStructure {
+  id: number;
+  name: string;
+  code: string | null;
+  description: string | null;
+  is_active: boolean;
+  rule_count: number;
+  created_at: string;
+  updated_at: string | null;
+}
+
+export interface SalaryStructureMinimal {
+  id: number;
+  name: string;
+  is_active: boolean;
+}
+
+export interface SalaryRule {
+  id: number;
+  salary_structure_id: number;
+  name: string;
+  code: string;
+  category: RuleCategory;
+  sequence: number;
+  computation_method: ComputationMethod;
+  fixed_amount: string | null;
+  percentage: string | null;
+  percentage_base: string | null;
+  formula_expression: string | null;
+  quantity: string;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string | null;
+}
+
+export interface SalaryStructureDetail extends SalaryStructure {
+  rules: SalaryRule[];
+}
+
+export interface EligibleEmployee {
+  employee: EmployeeMinimal;
+  eligible: boolean;
+  reason: string | null;
+  working_schedule_summary: string | null;
+  wage_monthly: string | null;
+}
+
+export interface Payrun {
+  id: number;
+  reference: string;
+  salary_structure: SalaryStructureMinimal;
+  period_start: string;
+  period_end: string;
+  status: PayrunStatus;
+  employee_count: number;
+  total_gross: string;
+  total_net: string;
+  warning_count: number;
+  created_by_name: string | null;
+  computed_at: string | null;
+  validated_at: string | null;
+  validated_by_name: string | null;
+  paid_at: string | null;
+  paid_by_name: string | null;
+  created_at: string;
+  updated_at: string | null;
+}
+
+export interface PayslipLine {
+  id: number;
+  rule_name_snapshot: string;
+  rule_code_snapshot: string;
+  category_snapshot: RuleCategory;
+  sequence_snapshot: number;
+  computation_method_snapshot: ComputationMethod;
+  base_description_snapshot: string | null;
+  amount: string;
+  quantity: string | null;
+}
+
+export interface PayrollWarning {
+  id: number;
+  severity: WarningSeverity;
+  code: string;
+  message: string;
+}
+
+export interface Payslip {
+  id: number;
+  payrun_id: number;
+  payrun_reference: string;
+  employee: EmployeeMinimal;
+  contract_id: number | null;
+  salary_structure: SalaryStructureMinimal;
+  period_start: string;
+  period_end: string;
+  status: PayrunStatus;
+  worked_days: string | null;
+  expected_work_days: string | null;
+  worked_hours: string | null;
+  basic: string;
+  allowances: string;
+  gross: string;
+  deductions: string;
+  net: string;
+  warning_count: number;
+  lines: PayslipLine[];
+  warnings: PayrollWarning[];
+  computed_at: string | null;
+  validated_at: string | null;
+  paid_at: string | null;
+  created_at: string;
+  updated_at: string | null;
+}
+
+export interface PayslipSummary {
+  id: number;
+  payrun_id: number;
+  employee: EmployeeMinimal;
+  salary_structure: SalaryStructureMinimal;
+  period_start: string;
+  period_end: string;
+  status: PayrunStatus;
+  basic: string;
+  gross: string;
+  net: string;
+  warning_count: number;
+}

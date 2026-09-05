@@ -117,7 +117,7 @@ def ranges_overlap(start_a: date, end_a: date, start_b: date, end_b: date) -> bo
     return start_a <= end_b and start_b <= end_a
 
 
-def _scheduled_days(employee: Employee, start_date: date, end_date: date) -> list[date]:
+def scheduled_working_days(employee: Employee, start_date: date, end_date: date) -> list[date]:
     schedule = employee.working_schedule
     if schedule is None:
         return []
@@ -137,7 +137,7 @@ def compute_duration(employee: Employee, time_off_type: TimeOffType, start_date:
         raise InvalidPeriodError()
 
     schedule = employee.working_schedule
-    scheduled_days = _scheduled_days(employee, start_date, end_date)
+    scheduled_days = scheduled_working_days(employee, start_date, end_date)
 
     if time_off_type.unit == TimeOffUnit.HOURS:
         if schedule is None:

@@ -10,6 +10,9 @@ const DOT: Record<string, string> = {
   TO_APPROVE: 'bg-amber-500',
   MISSING_CHECKOUT: 'bg-red-500',
   REFUSED: 'bg-red-500',
+  COMPUTED: 'bg-blue-500',
+  VALIDATED: 'bg-indigo-500',
+  PAID: 'bg-green-500',
 };
 
 const TEXT: Record<string, string> = {
@@ -24,6 +27,9 @@ const TEXT: Record<string, string> = {
   TO_APPROVE: 'text-amber-700',
   MISSING_CHECKOUT: 'text-red-700',
   REFUSED: 'text-red-700',
+  COMPUTED: 'text-blue-700',
+  VALIDATED: 'text-indigo-700',
+  PAID: 'text-green-700',
 };
 
 const LABELS: Record<string, string> = {
@@ -38,6 +44,9 @@ const LABELS: Record<string, string> = {
   TO_APPROVE: 'To Approve',
   MISSING_CHECKOUT: 'Missing Checkout',
   REFUSED: 'Refused',
+  COMPUTED: 'Computed',
+  VALIDATED: 'Validated',
+  PAID: 'Paid',
 };
 
 export function StatusBadge({ status }: { status: string }) {

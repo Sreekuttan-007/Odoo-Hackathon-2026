@@ -35,6 +35,13 @@ export function formatMinutes(minutes: number | null): string {
   return `${h}h ${String(m).padStart(2, '0')}m`;
 }
 
+export function formatMoney(amount: string, currency: string = 'INR'): string {
+  const n = parseFloat(amount);
+  const formatted = new Intl.NumberFormat('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(n);
+  const symbol = currency === 'INR' ? '₹' : `${currency} `;
+  return `${symbol}${formatted}`;
+}
+
 export function formatAmount(amount: string, unit: 'DAYS' | 'HOURS'): string {
   const n = parseFloat(amount);
   const trimmed = Number.isInteger(n) ? String(n) : n.toFixed(2);

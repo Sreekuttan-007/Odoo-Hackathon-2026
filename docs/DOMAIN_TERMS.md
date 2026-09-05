@@ -199,3 +199,72 @@ compute overtime for a given day.
   enough yet — not faked as a no-op toggle), a Time Off dashboard,
   multi-level approvals, accrual automation, carry-forward, public
   holidays, and any Attendance/Payroll integration from approved leave.
+
+## Payroll Model Decisions (Phase 5)
+- **Four entities, one direction of truth**: `SalaryStructure` groups
+  ordered `SalaryRule`s (HOW pay is calculated). A `Payrun` fixes WHEN
+  (period) and WHO (explicitly selected employees) for one payroll batch.
+  Each selected employee gets exactly one `Payslip` (WHAT they're paid),
+  and every `Payslip` carries `PayslipLine` rows (WHY — the rule-by-rule
+  trace). Basic/Allowances/Gross/Deductions/Net on a Payslip are always the
+  sum of that Payslip's line amounts grouped by category — GROSS and NET
+  are themselves ordinary rules (typically FORMULA) that an admin defines;
+  the engine never invents a total independently of the rules.
+- **Rule execution is sequence-ordered and forward-reference-safe**: rules
+  run by `sequence` ascending; a rule can read an earlier rule's result
+  (`rules["CODE"]`) or running category total (`categories["CATEGORY"]`),
+  and both dicts only ever contain what has already executed — so a
+  forward reference fails with a specific, visible error rather than
+  silently resolving to zero or being merely a style guideline.
+- **FORMULA rules use a constrained AST evaluator**
+  (`app/services/formula_engine.py`), not `eval()`/`exec()`. It whitelists
+  numeric literals, +-*/%**, unary +/-, and `rules["CODE"]` /
+  `categories["CATEGORY"]` subscripts — no attribute access, calls,
+  imports, or comprehensions, so there is no path to builtins regardless
+  of what an admin types into the formula field.
+- **Money is Decimal end-to-end**, quantized to 2dp with ROUND_HALF_UP at
+  the point each rule produces its amount.
+- **A rule computation failure is a BLOCKER, never a silent 0.** The
+  PayslipLine for that rule is omitted and a `RULE_FAILURE`
+  `PayrollWarning` is attached; any later rule depending on it fails too
+  (its code is simply absent from `rules`), so the failure is visible
+  everywhere it propagates.
+- **Payrun state machine**: `DRAFT -> COMPUTED -> VALIDATED -> PAID`,
+  strictly forward, enforced server-side (`409 INVALID_TRANSITION` on any
+  other attempted move). Recompute is allowed from DRAFT/COMPUTED (clears
+  and rebuilds that Payslip's lines/warnings deterministically — never
+  duplicates them) but never from VALIDATED/PAID. Validate re-runs compute
+  once more immediately before checking for blockers (a fresh preflight),
+  and refuses to proceed (`409 VALIDATION_BLOCKED`) if any Payslip still
+  has a BLOCKER-severity warning.
+- **Eligibility is re-validated server-side at creation**, never trusting
+  the wizard's client-side preview: an employee needs an unambiguous
+  applicable Contract (reusing `contract_rules.get_applicable_contract()`
+  from Phase 2) with a positive wage, and no existing Payslip for an
+  overlapping period in any other Payrun. If any selected employee fails
+  this, the whole creation is rejected (`409 INELIGIBLE_EMPLOYEES`) rather
+  than silently dropping them.
+- **The wizard's "Continue" is a GET** (`/payroll/payruns/eligible-employees`)
+  — it is structurally incapable of creating a Payrun, since only `POST
+  /payroll/payruns` (Step 2's "Create Payrun") does that.
+- **Historical snapshots are real**: each PayslipLine freezes the rule's
+  name/code/category/sequence/method/amount at compute time. Editing a
+  Salary Rule afterward changes only *future* computations — a
+  VALIDATED/PAID Payslip's numbers and PDF never change, because nothing
+  ever recomputes them again.
+- **Context exposed to rules**: `contract_wage`, `worked_days` (Attendance
+  records with a check_out in the period), `expected_work_days` (scheduled
+  working days per the employee's Working Schedule), `worked_hours`,
+  `overtime_hours`, and `approved_leave_days` (approved DAYS-unit Time Off
+  Requests overlapping the period — HOURS-unit leave isn't counted here,
+  and paid vs. unpaid leave isn't distinguished, since TimeOffType has no
+  such flag yet). Attendance/Time Off data is exposed as context only;
+  whether and how it affects pay is entirely up to how a Salary Rule's
+  formula uses it — the engine never reduces pay on its own.
+- **Deferred**: mid-period contract changes beyond the existing
+  zero/one/many applicable-contract resolution (no proration), a
+  paid/unpaid leave distinction, a Payroll Dashboard (next phase), real
+  email delivery of payslips (no mail provider is configured in this
+  environment — "Send Payslips" is intentionally not built rather than
+  faked), and any statutory/compliance claim (rules named PF/PT are
+  calculation examples only, not statutory filings).

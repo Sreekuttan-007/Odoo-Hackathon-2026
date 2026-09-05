@@ -54,3 +54,30 @@ def get_current_hr(current_user: User = Depends(get_current_user)) -> User:
             detail={"error": {"code": "ACCESS_DENIED", "message": "You don't have access to this area."}}
         )
     return current_user
+
+
+PAYROLL_OPERATOR_ROLES = {"HR_PAYROLL_USER", "HR_PAYROLL_MANAGER", "ADMIN"}
+PAYROLL_CONFIG_ROLES = {"HR_PAYROLL_MANAGER", "ADMIN"}
+
+
+def get_current_payroll_operator(current_user: User = Depends(get_current_user)) -> User:
+    """Payrun/Payslip operations (create, compute, validate, mark paid, send).
+    HR_MANAGER explicitly has no payroll mutation access (Phase 5 spec
+    section 67) even though it's HR-capable elsewhere."""
+    if current_user.role not in PAYROLL_OPERATOR_ROLES:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail={"error": {"code": "ACCESS_DENIED", "message": "You don't have access to payroll operations."}}
+        )
+    return current_user
+
+
+def get_current_payroll_manager(current_user: User = Depends(get_current_user)) -> User:
+    """Salary Structure/Rule configuration is HR_PAYROLL_MANAGER/ADMIN only;
+    HR_PAYROLL_USER has read-only access to configuration (section 68)."""
+    if current_user.role not in PAYROLL_CONFIG_ROLES:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail={"error": {"code": "ACCESS_DENIED", "message": "You don't have access to payroll configuration."}}
+        )
+    return current_user

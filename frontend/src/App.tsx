@@ -19,6 +19,14 @@ import { Allocations } from './pages/Allocations';
 import { AllocationDetail } from './pages/AllocationDetail';
 import { TimeOffRequests } from './pages/TimeOffRequests';
 import { TimeOffRequestDetail } from './pages/TimeOffRequestDetail';
+import { SalaryStructures } from './pages/SalaryStructures';
+import { SalaryStructureDetail } from './pages/SalaryStructureDetail';
+import { SalaryRules } from './pages/SalaryRules';
+import { Payruns } from './pages/Payruns';
+import { PayrunWizard } from './pages/PayrunWizard';
+import { PayrunDetail } from './pages/PayrunDetail';
+import { Payslips } from './pages/Payslips';
+import { PayslipDetail } from './pages/PayslipDetail';
 
 // Placeholder Pages
 const Placeholder = ({ title }: { title: string }) => (
@@ -62,10 +70,17 @@ function App() {
             </Route>
             
             <Route path="payroll">
-              <Route path="payruns" element={<Placeholder title="Payruns" />} />
-              <Route path="payslips" element={<Placeholder title="Payslips" />} />
-              <Route path="salary-structures" element={<Placeholder title="Salary Structures" />} />
-              <Route path="salary-rules" element={<Placeholder title="Salary Rules" />} />
+              <Route path="payslips" element={<Payslips />} />
+              <Route path="payslips/:payslipId" element={<PayslipDetail />} />
+
+              <Route element={<ProtectedRoute allowedRoles={['HR_PAYROLL_USER', 'HR_PAYROLL_MANAGER', 'ADMIN']} />}>
+                <Route path="payruns" element={<Payruns />} />
+                <Route path="payruns/new" element={<PayrunWizard />} />
+                <Route path="payruns/:payrunId" element={<PayrunDetail />} />
+                <Route path="salary-structures" element={<SalaryStructures />} />
+                <Route path="salary-structures/:structureId" element={<SalaryStructureDetail />} />
+                <Route path="salary-rules" element={<SalaryRules />} />
+              </Route>
             </Route>
             
             <Route path="admin" element={<ProtectedRoute allowedRoles={['ADMIN']} />}>

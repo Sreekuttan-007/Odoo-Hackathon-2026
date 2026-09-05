@@ -187,3 +187,59 @@
   `on_date` (default today), or all-zero if none exists.
 - Employee responses also include `time_off_requests_count` (real, computed
   from stored Time Off Requests).
+
+## Salary Structures & Rules
+- `GET /api/payroll/structures?search=&is_active=` / `GET .../{id}` (detail
+  includes ordered `rules[]`) — any authenticated user may read.
+- `POST /api/payroll/structures` / `PATCH .../{id}` — `HR_PAYROLL_MANAGER`/
+  `ADMIN` only (`HR_PAYROLL_USER` is read-only for configuration).
+- `GET /api/payroll/rules?salary_structure_id=` / `GET .../{id}` — read-only
+  for any authenticated user.
+- `POST /api/payroll/rules?salary_structure_id=` / `PATCH .../{id}` —
+  `HR_PAYROLL_MANAGER`/`ADMIN` only. `code` must be unique within its
+  structure (`409 DUPLICATE_CODE`). `computation_method` is `FIXED`
+  (`fixed_amount x quantity`), `PERCENTAGE` (`percentage% of
+  percentage_base`, where `percentage_base` is `CONTRACT_WAGE` or an
+  earlier rule's `code`), or `FORMULA` (a constrained expression — see
+  docs/DOMAIN_TERMS.md).
+
+## Payruns
+- `GET /api/payroll/payruns/eligible-employees?salary_structure_id=&period_start=&period_end=`
+  — read-only preview for the creation wizard's Step 1→2 "Continue"; never
+  creates a Payrun. `HR_PAYROLL_USER`/`HR_PAYROLL_MANAGER`/`ADMIN` only.
+- `GET /api/payroll/payruns` / `GET .../{id}` — same roles.
+- `POST /api/payroll/payruns` — `{salary_structure_id, period_start,
+  period_end, employee_ids}`. Re-validates every `employee_id`'s
+  eligibility server-side; any ineligible selection rejects the whole
+  request (`409 INELIGIBLE_EMPLOYEES`, with per-employee reasons). Creates
+  the Payrun in `DRAFT` with exactly the selected employees' Payslips —
+  never all employees matching the structure.
+- `POST /api/payroll/payruns/{id}/compute` — `DRAFT`or `COMPUTED` only
+  (recompute is idempotent, never duplicates lines); `409
+  INVALID_TRANSITION` otherwise.
+- `POST /api/payroll/payruns/{id}/validate` — `COMPUTED` only; recomputes
+  once more, then requires zero BLOCKER-severity warnings across all
+  Payslips or rejects with `409 VALIDATION_BLOCKED` (`details.blockers`
+  lists the offending employees/messages).
+- `POST /api/payroll/payruns/{id}/mark-paid` — `VALIDATED` only.
+- There is no "Send Payslips" endpoint — no email provider is configured
+  in this environment, and a fake success response is out of scope (see
+  docs/DOMAIN_TERMS.md).
+
+## Payslips
+- `GET /api/payroll/payslips?payrun_id=&employee_id=&status=` —
+  `EMPLOYEE`-role callers are always scoped to their own Payslips, and
+  only `VALIDATED`/`PAID` ones (not yet "available"); HR-capable roles may
+  filter by `employee_id`/`payrun_id` or omit them to see everyone,
+  regardless of status.
+- `GET /api/payroll/payslips/{id}` — `403` if the caller is neither
+  HR-capable nor the Payslip's own employee, or if it's their own but not
+  yet `VALIDATED`/`PAID`.
+- `GET /api/payroll/payslips/{id}/pdf` — same access rule; returns a real
+  generated PDF (`application/pdf`) built from the persisted, already
+  -computed Payslip — never recomputed, so a VALIDATED/PAID Payslip's PDF
+  stays historically stable even if its Salary Rules change afterward.
+- `basic`/`allowances`/`gross`/`deductions`/`net` are always the sum of
+  that Payslip's `lines[]` amounts grouped by category — never independently
+  edited. `warnings[]` carries severity (`BLOCKER`/`WARNING`/`INFO`), code,
+  and message for every issue found on that Payslip.

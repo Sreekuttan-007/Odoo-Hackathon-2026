@@ -12,6 +12,7 @@ from app.models.time_off import (
     TimeOffType, TimeOffAllocation, TimeOffRequest,
     TimeOffUnit, ApprovalPolicy, AllocationStatus, RequestStatus,
 )
+from app.models.payroll import SalaryStructure, SalaryRule, RuleCategory, ComputationMethod
 from app.core.security import get_password_hash
 from app.db.base import Base
 from app.services import contract_rules, attendance_rules, time_off_rules
@@ -258,6 +259,45 @@ def seed_db():
     )
 
     db.add_all([aarav_pto_request, dave_sick_request])
+    db.commit()
+
+    # --- Salary Structure: "Regular Salary" (the Phase 5 spec's own
+    # canonical worked example — Contract Wage 50,000 -> Basic 25,000,
+    # HRA 5,000, Standard Allowance 2,000, Gross 32,000, PF 2,500,
+    # Net 29,500) ---
+    structure_regular = SalaryStructure(name="Regular Salary", code="REGULAR", is_active=True,
+                                         description="Standard structure: Basic + HRA + Standard Allowance, less Provident Fund.")
+    db.add(structure_regular)
+    db.flush()
+    db.add_all([
+        SalaryRule(salary_structure_id=structure_regular.id, name="Basic Salary", code="BASIC", category=RuleCategory.BASIC,
+                   sequence=1, computation_method=ComputationMethod.PERCENTAGE, percentage=50, percentage_base="CONTRACT_WAGE"),
+        SalaryRule(salary_structure_id=structure_regular.id, name="House Rent Allowance", code="HRA", category=RuleCategory.ALLOWANCE,
+                   sequence=10, computation_method=ComputationMethod.PERCENTAGE, percentage=20, percentage_base="BASIC"),
+        SalaryRule(salary_structure_id=structure_regular.id, name="Standard Allowance", code="ALLOWANCE", category=RuleCategory.ALLOWANCE,
+                   sequence=20, computation_method=ComputationMethod.FIXED, fixed_amount=2000),
+        SalaryRule(salary_structure_id=structure_regular.id, name="Gross Salary", code="GROSS", category=RuleCategory.GROSS,
+                   sequence=60, computation_method=ComputationMethod.FORMULA, formula_expression='rules["BASIC"] + rules["HRA"] + rules["ALLOWANCE"]'),
+        SalaryRule(salary_structure_id=structure_regular.id, name="Provident Fund", code="PF", category=RuleCategory.DEDUCTION,
+                   sequence=80, computation_method=ComputationMethod.PERCENTAGE, percentage=10, percentage_base="BASIC"),
+        SalaryRule(salary_structure_id=structure_regular.id, name="Net Salary", code="NET", category=RuleCategory.NET,
+                   sequence=100, computation_method=ComputationMethod.FORMULA, formula_expression='rules["GROSS"] - rules["PF"]'),
+    ])
+
+    # A second, simpler structure so the "New Payrun" wizard has more than
+    # one Salary Structure to choose from.
+    structure_intern = SalaryStructure(name="Intern Salary", code="INTERN", is_active=True,
+                                        description="Flat stipend, no allowances or deductions.")
+    db.add(structure_intern)
+    db.flush()
+    db.add_all([
+        SalaryRule(salary_structure_id=structure_intern.id, name="Basic Salary", code="BASIC", category=RuleCategory.BASIC,
+                   sequence=1, computation_method=ComputationMethod.PERCENTAGE, percentage=100, percentage_base="CONTRACT_WAGE"),
+        SalaryRule(salary_structure_id=structure_intern.id, name="Gross Salary", code="GROSS", category=RuleCategory.GROSS,
+                   sequence=60, computation_method=ComputationMethod.FORMULA, formula_expression='rules["BASIC"]'),
+        SalaryRule(salary_structure_id=structure_intern.id, name="Net Salary", code="NET", category=RuleCategory.NET,
+                   sequence=100, computation_method=ComputationMethod.FORMULA, formula_expression='rules["GROSS"]'),
+    ])
     db.commit()
 
     print("Seeding complete.")

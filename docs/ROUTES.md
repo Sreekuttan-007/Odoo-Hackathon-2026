@@ -28,8 +28,12 @@
 /time-off/types/:typeId
 
 /payroll/payruns
+/payroll/payruns/new
+/payroll/payruns/:payrunId
 /payroll/payslips
+/payroll/payslips/:payslipId
 /payroll/salary-structures
+/payroll/salary-structures/:structureId
 /payroll/salary-rules
 
 /admin/users
