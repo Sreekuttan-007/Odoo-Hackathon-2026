@@ -146,12 +146,19 @@ def seed_db():
         "department_id": dept_engineering.id, "job_position_id": pos_engineer.id, "working_schedule_id": schedule_40h.id,
         "end_date": None, "wage_monthly": 85000, "currency": "INR",
     })
-    # Dave: a clean, single running contract — the second "clean payroll" demo subject.
+    # Dave: a clean, single running contract — the canonical "mentally
+    # explainable" demo subject (Phase 11 spec section 8): Contract Wage
+    # ₹50,000 -> BASIC ₹25,000 -> HRA ₹5,000 -> Allowance ₹2,000 -> GROSS
+    # ₹32,000 -> PF ₹2,500 -> NET ₹29,500 against the Regular Salary
+    # structure below. Wage is kept authoritative (re-asserted even if the
+    # contract already existed from an older seed run) so this example
+    # stays exact regardless of how many times seed.py has run before.
     dave_contract, _ = _get_or_create(db, Contract, employee_id=emp_staff.id, start_date=date(2026, 1, 1), defaults={
         "reference": contract_rules.generate_reference(db, date(2026, 1, 1)),
         "department_id": dept_engineering.id, "job_position_id": pos_engineer.id, "working_schedule_id": schedule_40h.id,
-        "end_date": None, "wage_monthly": 60000, "currency": "INR",
+        "end_date": None, "wage_monthly": 50000, "currency": "INR",
     })
+    dave_contract.wage_monthly = 50000
     db.commit()
 
     # --- Users ---

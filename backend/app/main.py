@@ -17,8 +17,8 @@ from app.api.simulator import router as simulator_router
 from app.api.intelligence import router as intelligence_router
 
 app = FastAPI(
-    title="PeoplePay360 API",
-    description="Backend API for PeoplePay360 HR & Payroll system",
+    title="Payloom API",
+    description="Backend API for Payloom, an HR & Payroll operations platform",
     version="0.1.0"
 )
 

@@ -807,6 +807,7 @@ Technical documentation is available in:
 - `docs/BUILD_STATUS.md`
 - `docs/PHASE_LOG.md`
 - `docs/NEON_DEPLOYMENT.md`
+- `docs/DEMO_HARDENING_REPORT.md`
 
 ---
 

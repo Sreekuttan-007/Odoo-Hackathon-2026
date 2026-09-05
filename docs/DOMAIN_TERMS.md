@@ -1,6 +1,6 @@
 # Domain Terms
 
-Canonical terminology across all PeoplePay360 systems:
+Canonical terminology across all Payloom systems:
 
 - **User**: A system login account (has an email and password).
 - **Employee**: The core HR personnel record. Not all employees may be Users.
