@@ -1,15 +1,19 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import api from '../services/api';
-import type { Payrun, PayslipSummary, Payslip } from '../types';
+import type { Payrun, PayslipSummary, PreflightResult } from '../types';
 import { StatusBadge } from '../components/StatusBadge';
 import { SectionCard } from '../components/ui/SectionCard';
 import { SkeletonDetail } from '../components/ui/Skeleton';
 import { Button } from '../components/ui/Button';
+import { PreflightPanel } from '../components/PreflightPanel';
 import { useToast, ToastViewport } from '../components/Toast';
 import { formatDate, formatMoney } from '../lib/format';
-import { ArrowLeft, Calculator, ShieldCheck, Banknote, AlertTriangle, CheckCircle2, FileDown } from 'lucide-react';
+import { ArrowLeft, Calculator, ShieldCheck, Banknote, AlertTriangle, FileDown } from 'lucide-react';
 import { openPayslipPdf } from '../lib/pdf';
+
+const PREFLIGHT_PANEL_ID = 'preflight-panel';
+const PREFLIGHT_STATUSES = ['COMPUTED', 'VALIDATED', 'PAID'];
 
 export function PayrunDetail() {
   const { payrunId } = useParams();
@@ -18,11 +22,28 @@ export function PayrunDetail() {
 
   const [payrun, setPayrun] = useState<Payrun | null>(null);
   const [payslips, setPayslips] = useState<PayslipSummary[]>([]);
-  const [details, setDetails] = useState<Record<number, Payslip>>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const [acting, setActing] = useState(false);
-  const [blockers, setBlockers] = useState<{ employee: string; messages: string[] }[] | null>(null);
+
+  const [preflight, setPreflight] = useState<PreflightResult | null>(null);
+  const [preflightLoading, setPreflightLoading] = useState(false);
+
+  const runPreflight = useCallback(async (method: 'get' | 'post' = 'get') => {
+    setPreflightLoading(true);
+    try {
+      const res = method === 'post'
+        ? await api.post(`/payroll/payruns/${payrunId}/preflight`)
+        : await api.get(`/payroll/payruns/${payrunId}/preflight`);
+      setPreflight(res.data);
+      return res.data as PreflightResult;
+    } catch {
+      setPreflight(null);
+      return null;
+    } finally {
+      setPreflightLoading(false);
+    }
+  }, [payrunId]);
 
   const fetchAll = useCallback(async () => {
     setLoading(true);
@@ -34,26 +55,26 @@ export function PayrunDetail() {
       ]);
       setPayrun(payrunRes.data);
       setPayslips(payslipsRes.data);
-
-      const withWarnings = payslipsRes.data.filter((p: PayslipSummary) => p.warning_count > 0);
-      if (withWarnings.length > 0) {
-        const detailResults = await Promise.all(withWarnings.map((p: PayslipSummary) => api.get(`/payroll/payslips/${p.id}`)));
-        setDetails(Object.fromEntries(detailResults.map(r => [r.data.id, r.data])));
+      if (PREFLIGHT_STATUSES.includes(payrunRes.data.status)) {
+        await runPreflight('get');
       } else {
-        setDetails({});
+        setPreflight(null);
       }
     } catch {
       setError(true);
     } finally {
       setLoading(false);
     }
-  }, [payrunId]);
+  }, [payrunId, runPreflight]);
 
   useEffect(() => { fetchAll(); }, [fetchAll]);
 
+  const scrollToPreflight = () => {
+    document.getElementById(PREFLIGHT_PANEL_ID)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
+
   const runAction = async (action: 'compute' | 'validate' | 'mark-paid') => {
     setActing(true);
-    setBlockers(null);
     try {
       await api.post(`/payroll/payruns/${payrunId}/${action}`);
       await fetchAll();
@@ -61,10 +82,12 @@ export function PayrunDetail() {
     } catch (err: any) {
       const detail = err.response?.data?.detail?.error;
       if (detail?.code === 'VALIDATION_BLOCKED') {
-        setBlockers(detail.details?.blockers?.map((b: any) => ({ employee: `${b.employee.first_name} ${b.employee.last_name}`, messages: b.messages })) || []);
-        await fetchAll();
+        await runPreflight('get');
+        push('Validation blocked — resolve the Preflight blockers first.', 'error');
+        setTimeout(scrollToPreflight, 100);
+      } else {
+        push(detail?.message || `Failed to ${action}.`, 'error');
       }
-      push(detail?.message || `Failed to ${action}.`, 'error');
     } finally {
       setActing(false);
     }
@@ -88,7 +111,8 @@ export function PayrunDetail() {
     );
   }
 
-  const allWarnings = Object.values(details).flatMap(p => p.warnings.map(w => ({ employee: p.employee, warning: w })));
+  const blockerCount = preflight?.summary.blockers ?? 0;
+  const validateBlocked = blockerCount > 0;
 
   return (
     <div className="space-y-5 max-w-4xl">
@@ -125,49 +149,40 @@ export function PayrunDetail() {
           </div>
         </div>
 
-        <div className="mt-5 flex gap-2">
+        <div className="mt-5 flex flex-wrap items-center gap-2">
           {payrun.status === 'DRAFT' && (
             <Button variant="primary" loading={acting} onClick={() => runAction('compute')}><Calculator className="w-3.5 h-3.5" /> Compute</Button>
           )}
           {payrun.status === 'COMPUTED' && (
             <>
               <Button variant="secondary" loading={acting} onClick={() => runAction('compute')}><Calculator className="w-3.5 h-3.5" /> Recompute</Button>
-              <Button variant="primary" loading={acting} onClick={() => runAction('validate')}><ShieldCheck className="w-3.5 h-3.5" /> Validate</Button>
+              <Button
+                variant="primary" loading={acting} disabled={validateBlocked}
+                title={validateBlocked ? `Resolve ${blockerCount} Preflight blocker${blockerCount === 1 ? '' : 's'} before validation.` : undefined}
+                onClick={() => runAction('validate')}
+              >
+                <ShieldCheck className="w-3.5 h-3.5" /> Validate
+              </Button>
+              {validateBlocked && (
+                <button onClick={scrollToPreflight} className="inline-flex items-center gap-1.5 text-sm text-danger-700 hover:text-danger-800">
+                  <AlertTriangle className="w-3.5 h-3.5" /> Resolve {blockerCount} blocker{blockerCount === 1 ? '' : 's'} in Preflight
+                </button>
+              )}
             </>
           )}
           {payrun.status === 'VALIDATED' && (
             <Button variant="primary" loading={acting} onClick={() => runAction('mark-paid')}><Banknote className="w-3.5 h-3.5" /> Mark Paid</Button>
           )}
         </div>
-
-        {blockers && blockers.length > 0 && (
-          <div className="mt-4 space-y-2">
-            {blockers.map((b, i) => (
-              <div key={i} className="flex items-start gap-2 text-sm text-danger-700 bg-danger-50 border border-danger-100 p-3 rounded-md">
-                <AlertTriangle className="w-4 h-4 mt-0.5 shrink-0" />
-                <span><strong>{b.employee}</strong>: {b.messages.join(' ')}</span>
-              </div>
-            ))}
-          </div>
-        )}
       </SectionCard>
 
-      {payrun.status !== 'DRAFT' && (
-        <SectionCard>
-          <h2 className="text-sm font-semibold text-gray-900 mb-3">Payroll checks</h2>
-          {allWarnings.length === 0 ? (
-            <p className="text-sm text-brand-700 flex items-center gap-1.5"><CheckCircle2 className="w-4 h-4" /> No issues found.</p>
-          ) : (
-            <div className="space-y-2">
-              {allWarnings.map(({ employee, warning }) => (
-                <div key={warning.id} className={`flex items-start gap-2 text-sm p-2.5 rounded-md ${warning.severity === 'BLOCKER' ? 'bg-danger-50 text-danger-700' : 'bg-warning-50 text-warning-700'}`}>
-                  <AlertTriangle className="w-3.5 h-3.5 mt-0.5 shrink-0" />
-                  <span><strong>{employee.first_name} {employee.last_name}</strong>: {warning.message}</span>
-                </div>
-              ))}
-            </div>
-          )}
-        </SectionCard>
+      {PREFLIGHT_STATUSES.includes(payrun.status) && (
+        <PreflightPanel
+          result={preflight}
+          loading={preflightLoading}
+          onRun={() => runPreflight('post')}
+          panelId={PREFLIGHT_PANEL_ID}
+        />
       )}
 
       <SectionCard padded={false}>

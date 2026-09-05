@@ -318,3 +318,84 @@ compute overtime for a given day.
   of this endpoint's outcome. The model's output is validated before use:
   any `components[].rule_code` not matching a real rule code in the trace
   sent to it is silently dropped.
+
+## Phase 8 — Payroll Preflight
+
+- **Payroll Preflight** is a deterministic *payroll readiness & risk
+  engine* (`app/services/preflight.py`). It inspects an already-computed
+  Payrun and surfaces real payroll problems BEFORE validation / payment.
+  It is a **derived assessment** — it persists nothing and introduces no
+  new Payrun status. The canonical state machine (DRAFT → COMPUTED →
+  VALIDATED → PAID) is untouched; Preflight is a *gate* between COMPUTED
+  and VALIDATED, expressed as a separate `readiness` value.
+- **Readiness** (`NOT_RUN` / `ACTION_REQUIRED` / `REVIEW_RECOMMENDED` /
+  `READY`) is purely a function of finding counts: any BLOCKER →
+  `ACTION_REQUIRED`; else any WARNING → `REVIEW_RECOMMENDED`; else `READY`.
+  `NOT_RUN` is only returned for a `DRAFT` Payrun.
+- **Severity reuse**: Preflight uses the existing `WarningSeverity`
+  vocabulary (`BLOCKER` / `WARNING` / `INFO`) — it is not a second warning
+  system. It also *bridges* the compute engine's own BLOCKER/WARNING
+  `PayrollWarning`s (e.g. `RULE_FAILURE`) into its findings, so one
+  coherent readiness view covers both.
+  - **BLOCKER**: payroll must not be validated until resolved — missing /
+    conflicting applicable contract, duplicate Payslip, missing or
+    ruleless Salary Structure, a rule-execution failure, persisted totals
+    disagreeing with the calculation lines, negative Net.
+  - **WARNING**: may proceed, explicit review recommended — large Net
+    variance vs. the previous Payslip, deductions exceeding gross,
+    incomplete Attendance in the period, an over-long Attendance session,
+    worked days well above the schedule.
+  - **INFO**: context, no risk — approved Time Off overlapping the period,
+    no previous Payslip to compare, a contract starting/ending mid-period.
+- **A finding** carries: `code` (stable id), `severity`, `category`,
+  `message`, `employee_id` / `employee_name` / `payslip_id` where
+  applicable, an `evidence` object (concrete numbers/refs — never "looks
+  unusual"), and a `resolution` string where an action is known.
+- **Checks are a registry** (`PREFLIGHT_CHECKS`), each a `PreflightCheck`
+  (`code`, `name`, `category`, `evaluate(context)`), run against a single
+  `PreflightContext` built once per run (one batched query per dimension,
+  no per-employee query storms). A check that raises unexpectedly becomes
+  a BLOCKER `PREFLIGHT_CHECK_ERROR` — Preflight fails *safe*, never
+  silently READY.
+- **Thresholds are centralised** in `preflight.THRESHOLDS`
+  (`PreflightThresholds`): Net variance is flagged only when it crosses
+  **both** a percentage bar (default 25%) **and** a minimum absolute
+  rupee bar (default ₹5,000), so a tiny salary swinging a large % — or a
+  large salary nudged a few rupees — produces no noise. Attendance
+  anomaly bars (max single session 16h; worked-days ratio 1.5×) live in
+  the same object.
+- **Salary variance** compares the current Payslip's Net against the most
+  recent *strictly-earlier, already-computed* Payslip for the same
+  employee in any other Payrun. It reports `previous_net`, `current_net`,
+  `absolute_delta`, `percentage_delta` — and never calls the change
+  "wrong", only "review recommended". No previous Payslip → an INFO
+  `NO_PREVIOUS_PAYSLIP`, never a variance WARNING.
+- **Attendance**: Preflight only *reads* Attendance as context (this
+  engine never derives pay from Attendance unless a Salary Rule formula
+  explicitly uses `worked_*`). It flags incomplete records (no check-out)
+  inside the period and implausibly long single sessions; it does not
+  invent an Attendance→pay dependency.
+- **Time Off**: approved Time Off overlapping the period is surfaced as
+  **INFO only**, with an explicit note that pay is not reduced for leave
+  unless a formula uses `approved_leave_days`. Preflight never claims a
+  deduction that did not happen.
+- **PayTrace integration**: Preflight *identifies* risk (e.g. "Net
+  increased 80%"); PayTrace *explains* the calculation. Variance / integrity
+  findings deep-link to the Payslip's PayTrace rather than duplicating it.
+- **The validation gate is server-side and independent of the client**
+  (spec sections 10/36/65): `payroll_engine.validate_payrun` recomputes
+  every Payslip, then calls `preflight.evaluate_findings()` and aborts the
+  transaction (`409 VALIDATION_BLOCKED`) if any blocker exists. A stale
+  "READY" from the UI, or a direct API call, cannot bypass it — the check
+  runs against current data every time.
+- **No bank / payment details check**: the `Employee` model has no
+  bank/payment fields, and Payloom marks payroll paid without executing
+  any transfer. The "missing payment details" check from the spec is
+  therefore intentionally **not implemented** — there is no field to
+  inspect and nothing would be actionable. Future scope if such fields
+  are added.
+- **No AI, no risk score**: the engine is 100% deterministic. There is no
+  "payroll safety score" — BLOCKER / WARNING / INFO with evidence is the
+  whole model. An optional AI layer could later *summarise* already-
+  classified findings, but is out of scope for this phase and would never
+  classify severity or decide whether validation is allowed.

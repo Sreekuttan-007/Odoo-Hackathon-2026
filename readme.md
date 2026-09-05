@@ -226,25 +226,47 @@ Result: ₹10,000
 
 ## Payroll Preflight
 
-Before finalizing payroll, Payloom can surface issues such as:
+> **PayTrace tells us *why* payroll produced a number. Preflight tells us *whether* we're comfortable letting that number move forward.**
+
+Payroll Preflight is a **deterministic payroll readiness & risk engine**. After
+a Payrun is computed, Preflight inspects it against the actual database and
+reports whether it is safe to finalize — with evidence, not vibes. No AI is
+involved anywhere in the engine.
 
 ```text
-Missing applicable contract
-Missing wage
-Duplicate Payslip
-Rule computation error
-Incomplete payroll data
+Create Payrun → Compute → PREFLIGHT → Fix issues → Validate → Mark Paid
 ```
 
-Warnings are modeled with explicit severities:
+It is a **derived assessment** — it persists nothing and adds no Payrun status.
+Readiness is a pure function of the finding counts:
 
 ```text
-BLOCKER
-WARNING
-INFO
+NOT_RUN            (Payrun still in DRAFT)
+ACTION_REQUIRED    any BLOCKER present
+REVIEW_RECOMMENDED no blockers, some warnings
+READY             no blockers, no warnings
 ```
 
-A blocker can prevent validation rather than allowing payroll to continue with incorrect data.
+13 registered checks across contract, payroll-configuration, payslip-integrity,
+attendance, time-off, variance and duplicate dimensions, e.g.:
+
+```text
+BLOCKER   No applicable contract for 01–30 Sep 2026
+BLOCKER   Two contracts overlap the payroll period
+BLOCKER   Persisted Payslip totals disagree with the calculation lines
+WARNING   Net Pay increased ₹11,700 (+39.66%) vs the previous Payslip — review recommended
+WARNING   3 Attendance records have no check-out inside the period
+INFO      2 approved leave days overlap this period (pay is not reduced)
+```
+
+Every finding carries a stable `code`, a severity (`BLOCKER` / `WARNING` /
+`INFO` — the existing vocabulary), an `evidence` object, and a `resolution`.
+
+**The validation gate is server-side and independent of the client.** `Validate`
+recomputes every Payslip and then re-runs the whole Preflight engine on the
+backend; if any blocker exists it aborts (`409 VALIDATION_BLOCKED`). A stale
+"READY" in the browser — or a direct API call — cannot bypass it. If Payloom
+says **READY TO VALIDATE**, the backend actually checked.
 
 ---
 

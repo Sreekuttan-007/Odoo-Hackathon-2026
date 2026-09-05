@@ -18,7 +18,7 @@ from app.schemas.payroll import (
     PayslipResponse, PayslipSummaryResponse, PayslipLineResponse, PayrollWarningResponse,
 )
 from app.api.deps import get_current_user, get_current_payroll_operator, get_current_payroll_manager, HR_CAPABLE_ROLES
-from app.services import payroll_engine, payslip_pdf, paytrace, payroll_narrator
+from app.services import payroll_engine, payslip_pdf, paytrace, payroll_narrator, preflight
 from app.services.schedule_calculator import build_schedule_summary
 
 router = APIRouter()
@@ -316,16 +316,48 @@ def validate_payrun(payrun_id: int, db: Session = Depends(get_db), current_opera
     except payroll_engine.InvalidTransitionError as exc:
         raise HTTPException(409, detail={"error": {"code": "INVALID_TRANSITION", "message": str(exc)}})
     except payroll_engine.ValidationBlockedError as exc:
+        findings = exc.findings
+        by_payslip = {p.id: p for p in payrun.payslips}
         blockers = []
-        for payslip in payrun.payslips:
-            if payslip.id in exc.blocking_payslip_ids:
-                blockers.append(ValidationBlockerDetail(
-                    payslip_id=payslip.id,
-                    employee=EmployeeMinimal.model_validate(payslip.employee),
-                    messages=[w.message for w in payslip.warnings if w.severity == WarningSeverity.BLOCKER],
-                ).model_dump(mode="json"))
-        raise HTTPException(409, detail={"error": {"code": "VALIDATION_BLOCKED", "message": str(exc), "details": {"blockers": blockers}}})
+        for payslip_id in exc.blocking_payslip_ids:
+            payslip = by_payslip.get(payslip_id)
+            if payslip is None:
+                continue
+            blockers.append(ValidationBlockerDetail(
+                payslip_id=payslip.id,
+                employee=EmployeeMinimal.model_validate(payslip.employee),
+                messages=[f.message for f in findings if f.payslip_id == payslip.id and f.severity == WarningSeverity.BLOCKER],
+            ).model_dump(mode="json"))
+        raise HTTPException(409, detail={"error": {
+            "code": "VALIDATION_BLOCKED",
+            "message": str(exc),
+            "details": {
+                "blockers": blockers,
+                "findings": [f.to_dict() for f in findings],
+            },
+        }})
     return _payrun_response(payrun)
+
+
+@router.get("/payroll/payruns/{payrun_id}/preflight")
+def get_payrun_preflight(payrun_id: int, db: Session = Depends(get_db), current_operator: User = Depends(get_current_payroll_operator)):
+    """Payroll Preflight (Phase 8): a deterministic, freshly-derived
+    readiness & risk assessment of a computed Payrun. Read-only — persists
+    nothing, never recomputes payroll, never mutates the Payrun. See
+    app/services/preflight.py. GET and POST are equivalent (POST exists so
+    the UI's 'Run Again' reads as an action)."""
+    payrun = db.query(Payrun).filter(Payrun.id == payrun_id).first()
+    if not payrun:
+        raise HTTPException(404, detail={"error": {"code": "NOT_FOUND", "message": "Payrun not found."}})
+    return preflight.run_preflight(db, payrun)
+
+
+@router.post("/payroll/payruns/{payrun_id}/preflight")
+def run_payrun_preflight(payrun_id: int, db: Session = Depends(get_db), current_operator: User = Depends(get_current_payroll_operator)):
+    payrun = db.query(Payrun).filter(Payrun.id == payrun_id).first()
+    if not payrun:
+        raise HTTPException(404, detail={"error": {"code": "NOT_FOUND", "message": "Payrun not found."}})
+    return preflight.run_preflight(db, payrun)
 
 
 @router.post("/payroll/payruns/{payrun_id}/mark-paid", response_model=PayrunResponse)

@@ -222,6 +222,50 @@
   Payslips or rejects with `409 VALIDATION_BLOCKED` (`details.blockers`
   lists the offending employees/messages).
 - `POST /api/payroll/payruns/{id}/mark-paid` — `VALIDATED` only.
+- `GET`/`POST /api/payroll/payruns/{id}/preflight` (Phase 8, Payroll Preflight) —
+  `HR_PAYROLL_USER`/`HR_PAYROLL_MANAGER`/`ADMIN` only. Runs the deterministic
+  Preflight engine against the current DB state and returns a derived
+  readiness assessment. Read-only — persists nothing, never recomputes
+  payroll, never mutates the Payrun; GET and POST are equivalent (POST
+  exists so the UI's "Run again" reads as an action). A `DRAFT` Payrun
+  returns `readiness: "NOT_RUN"` with empty findings. Otherwise:
+  ```json
+  {
+    "payrun_id": 12, "reference": "PR/2026/0003", "status": "COMPUTED",
+    "period": {"start": "2026-09-01", "end": "2026-09-30"},
+    "employee_count": 8, "generated_at": "2026-09-06T...Z",
+    "readiness": "ACTION_REQUIRED",
+    "summary": {"blockers": 2, "warnings": 3, "info": 1},
+    "findings": [
+      {
+        "code": "MISSING_APPLICABLE_CONTRACT", "severity": "BLOCKER",
+        "category": "CONTRACT", "message": "...",
+        "employee_id": 104, "employee_name": "Aarav Sharma", "payslip_id": 55,
+        "evidence": {"period_start": "2026-09-01", "period_end": "2026-09-30"},
+        "resolution": "Create or correct this employee's contract ..."
+      }
+    ],
+    "message": null
+  }
+  ```
+  `readiness` is purely a function of the counts: any BLOCKER →
+  `ACTION_REQUIRED`; else any WARNING → `REVIEW_RECOMMENDED`; else `READY`.
+  Finding `code`s are stable identifiers (`MISSING_APPLICABLE_CONTRACT`,
+  `CONTRACT_CONFLICT`, `DUPLICATE_PAYSLIP`, `MISSING_SALARY_STRUCTURE`,
+  `SALARY_STRUCTURE_HAS_NO_RULES`, `SALARY_STRUCTURE_HAS_NO_NET_RULE`,
+  `PAYSLIP_TOTAL_MISMATCH`, `NEGATIVE_NET_PAY`, `DEDUCTIONS_EXCEED_GROSS`,
+  `INCOMPLETE_ATTENDANCE`, `LONG_ATTENDANCE_SESSION`,
+  `ATTENDANCE_ABOVE_SCHEDULE`, `APPROVED_TIME_OFF_IN_PERIOD`,
+  `LARGE_NET_VARIANCE`, `NO_PREVIOUS_PAYSLIP`, `CONTRACT_STARTS_MID_PERIOD`,
+  `CONTRACT_ENDS_MID_PERIOD`, plus any bridged compute-engine warning code
+  such as `RULE_FAILURE`, and the fail-safe `PREFLIGHT_CHECK_ERROR`).
+- `POST /api/payroll/payruns/{id}/validate` now additionally re-runs the
+  full Preflight engine server-side after its recompute. On any blocker it
+  rejects with `409 VALIDATION_BLOCKED`; `details.blockers` keeps the
+  existing per-Payslip `{payslip_id, employee, messages}` shape and
+  `details.findings` carries the complete Preflight finding list. This is
+  the stale-Preflight guard — a blocker introduced after the last UI
+  Preflight still stops validation.
 - There is no "Send Payslips" endpoint — no email provider is configured
   in this environment, and a fake success response is out of scope (see
   docs/DOMAIN_TERMS.md).

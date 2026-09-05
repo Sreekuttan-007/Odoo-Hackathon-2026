@@ -410,6 +410,39 @@ export interface PayTraceNarration {
   components: { rule_code: string; explanation: string }[] | null;
 }
 
+// Payroll Preflight (Phase 8) — a deterministic, derived readiness &
+// risk assessment of a COMPUTED Payrun. See backend/app/services/preflight.py.
+export type PreflightReadiness =
+  | 'NOT_RUN'
+  | 'ACTION_REQUIRED'
+  | 'REVIEW_RECOMMENDED'
+  | 'READY';
+
+export interface PreflightFinding {
+  code: string;
+  severity: WarningSeverity;
+  category: string;
+  message: string;
+  employee_id: number | null;
+  employee_name: string | null;
+  payslip_id: number | null;
+  evidence: Record<string, unknown>;
+  resolution: string | null;
+}
+
+export interface PreflightResult {
+  payrun_id: number;
+  reference: string;
+  status: PayrunStatus;
+  period: { start: string; end: string };
+  employee_count: number;
+  generated_at: string;
+  readiness: PreflightReadiness;
+  summary: { blockers: number; warnings: number; info: number };
+  findings: PreflightFinding[];
+  message: string | null;
+}
+
 export interface PayslipSummary {
   id: number;
   payrun_id: number;

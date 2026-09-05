@@ -74,9 +74,12 @@ class IneligibleEmployeesError(ValueError):
 
 
 class ValidationBlockedError(ValueError):
-    def __init__(self, blocking_payslip_ids: list[int]):
-        self.blocking_payslip_ids = blocking_payslip_ids
-        super().__init__("This Payrun has unresolved blockers and cannot be validated.")
+    def __init__(self, findings: list):
+        # Phase 8: carries the full Preflight blocker findings. The
+        # per-payslip id list stays available for the existing API shape.
+        self.findings = findings
+        self.blocking_payslip_ids = sorted({f.payslip_id for f in findings if f.payslip_id is not None})
+        super().__init__("This Payrun has unresolved Preflight blockers and cannot be validated.")
 
 
 class EligibilityResult(NamedTuple):
@@ -329,17 +332,22 @@ def validate_payrun(db: Session, payrun: Payrun, user) -> None:
     if payrun.status != PayrunStatus.COMPUTED:
         raise InvalidTransitionError(payrun.status.value, "validate")
 
-    # Re-check freshness before finalizing (section 36: "rerun/recheck preflight").
+    # Phase 8 stale-Preflight protection (spec sections 36/65): never trust
+    # a prior "READY" — recompute every Payslip from current data, then run
+    # the deterministic Preflight engine here on the server immediately
+    # before finalizing. A blocker introduced after the last UI Preflight
+    # still stops validation.
+    from app.services import preflight
+
     for payslip in payrun.payslips:
         compute_payslip(db, payslip)
+    db.flush()
 
-    blocking_ids = [
-        p.id for p in payrun.payslips
-        if any(w.severity == WarningSeverity.BLOCKER for w in p.warnings)
-    ]
-    if blocking_ids:
-        db.commit()  # persist the refreshed preflight state even though validation is refused
-        raise ValidationBlockedError(blocking_ids)
+    findings = preflight.evaluate_findings(db, payrun)
+    blockers = [f for f in findings if f.severity == WarningSeverity.BLOCKER]
+    if blockers:
+        db.commit()  # persist the refreshed compute state even though validation is refused
+        raise ValidationBlockedError(blockers)
 
     now = now_utc()
     payrun.status = PayrunStatus.VALIDATED
