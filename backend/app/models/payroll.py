@@ -164,6 +164,17 @@ class PayslipLine(Base):
     computation_method_snapshot = Column(Enum(ComputationMethod), nullable=False)
     base_description_snapshot = Column(String, nullable=True)
 
+    # Structured PayTrace metadata (Phase 7) — captured at compute time
+    # alongside base_description_snapshot's human string, so a historical
+    # trace can be rebuilt without touching the (possibly since-edited)
+    # SalaryRule row or Contract. Null on lines computed before Phase 7;
+    # PayTrace falls back to base_description_snapshot only for those.
+    fixed_amount_snapshot = Column(Numeric(12, 2), nullable=True)
+    percentage_snapshot = Column(Numeric(6, 2), nullable=True)
+    base_code_snapshot = Column(String, nullable=True)  # "CONTRACT_WAGE" or another rule's code
+    base_amount_snapshot = Column(Numeric(14, 4), nullable=True)  # resolved value of base_code_snapshot at compute time
+    formula_inputs_snapshot = Column(Text, nullable=True)  # JSON: {identifier: "value"} referenced by the formula
+
     amount = Column(Numeric(12, 2), nullable=False)
     quantity = Column(Numeric(6, 2), nullable=True)
 

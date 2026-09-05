@@ -32,6 +32,7 @@
 /payroll/payruns/:payrunId
 /payroll/payslips
 /payroll/payslips/:payslipId
+/payroll/payslips/:payslipId/trace
 /payroll/salary-structures
 /payroll/salary-structures/:structureId
 /payroll/salary-rules

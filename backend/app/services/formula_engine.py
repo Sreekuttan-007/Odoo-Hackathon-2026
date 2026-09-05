@@ -55,6 +55,48 @@ def evaluate_formula(expression: str, context: dict) -> Decimal:
     return _eval_node(tree.body, context)
 
 
+def extract_inputs(expression: str, context: dict) -> dict[str, Decimal]:
+    """Read-only companion to evaluate_formula, used only to build a
+    PayTrace explanation (never for computing payroll). Walks the same
+    AST and returns every plain name and rules["CODE"]/categories["CODE"]
+    reference the formula reads, resolved against `context`, keyed by a
+    human label ("BASIC", "categories.GROSS", "contract_wage", ...).
+    Does not execute anything new — just inventories what evaluate_formula
+    would have looked up, so it can't diverge from what actually ran."""
+    try:
+        tree = ast.parse(expression, mode="eval")
+    except SyntaxError:
+        return {}
+    inputs: dict[str, Decimal] = {}
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Name):
+            if node.id in _SUBSCRIPTABLE_NAMES:
+                continue
+            if node.id in context:
+                try:
+                    inputs[node.id] = _to_decimal(context[node.id])
+                except FormulaError:
+                    pass
+        elif isinstance(node, ast.Subscript):
+            if not (isinstance(node.value, ast.Name) and node.value.id in _SUBSCRIPTABLE_NAMES):
+                continue
+            container_name = node.value.id
+            key_node = node.slice
+            if isinstance(key_node, ast.Index):  # pragma: no cover - py<3.9 compat
+                key_node = key_node.value
+            if not (isinstance(key_node, ast.Constant) and isinstance(key_node.value, str)):
+                continue
+            key = key_node.value
+            container = context.get(container_name, {})
+            if key in container:
+                label = key if container_name == "rules" else f"categories.{key}"
+                try:
+                    inputs[label] = _to_decimal(container[key])
+                except FormulaError:
+                    pass
+    return inputs
+
+
 def _eval_node(node: ast.AST, context: dict) -> Decimal:
     if isinstance(node, ast.Constant):
         if isinstance(node.value, bool) or not isinstance(node.value, (int, float)):

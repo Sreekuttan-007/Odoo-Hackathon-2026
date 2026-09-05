@@ -239,6 +239,30 @@
   generated PDF (`application/pdf`) built from the persisted, already
   -computed Payslip — never recomputed, so a VALIDATED/PAID Payslip's PDF
   stays historically stable even if its Salary Rules change afterward.
+- `GET /api/payroll/payslips/{id}/trace` (Phase 7, PayTrace) — same access
+  rule. Read-only; never recomputes. Returns `{"available": false, "reason":
+  "NOT_COMPUTED"|"NO_LINES", "message": ...}` for an uncomputed Payslip or
+  one with no lines (e.g. blocked before rule execution), never a
+  fabricated trace. Otherwise returns a structured, deterministic
+  explanation rebuilt entirely from each `PayslipLine`'s own snapshot
+  fields (`fixed_amount_snapshot`/`percentage_snapshot`/`base_code_snapshot`/
+  `base_amount_snapshot`/`formula_inputs_snapshot`) — never from the
+  current (possibly since-edited) `SalaryRule` row, so a historical trace
+  cannot shift when a live rule is edited afterward. Lines computed before
+  Phase 7 lack these columns (`has_structured_history: false` in the
+  response) and fall back to the pre-existing `base_description_snapshot`
+  string rather than fabricating structured numbers.
+- `GET /api/payroll/payslips/{id}/trace/explain?mode=employee|payroll`
+  (Phase 7B, PayTrace AI Narrator — optional) — same access rule. Builds
+  the deterministic trace above and asks an LLM (Anthropic, called via
+  plain HTTP, gated by the optional `ANTHROPIC_API_KEY` env var) to
+  restate it in plain language. Returns `{"available": false, "reason":
+  "NOT_CONFIGURED"|"TIMEOUT"|"RATE_LIMITED"|"PROVIDER_ERROR"|
+  "MALFORMED_RESPONSE"}` on any failure — including no key configured —
+  rather than raising; the deterministic trace endpoint above is entirely
+  unaffected by this endpoint's outcome. Any `components[].rule_code` the
+  model returns is filtered against the trace's real rule codes before
+  being returned, so a hallucinated reference can't pass through.
 - `basic`/`allowances`/`gross`/`deductions`/`net` are always the sum of
   that Payslip's `lines[]` amounts grouped by category — never independently
   edited. `warnings[]` carries severity (`BLOCKER`/`WARNING`/`INFO`), code,

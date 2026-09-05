@@ -27,6 +27,7 @@ import { PayrunWizard } from './pages/PayrunWizard';
 import { PayrunDetail } from './pages/PayrunDetail';
 import { Payslips } from './pages/Payslips';
 import { PayslipDetail } from './pages/PayslipDetail';
+import { PayTrace } from './pages/PayTrace';
 import { Dashboard } from './pages/Dashboard';
 
 function App() {
@@ -71,6 +72,7 @@ function App() {
             <Route path="payroll">
               <Route path="payslips" element={<Payslips />} />
               <Route path="payslips/:payslipId" element={<PayslipDetail />} />
+              <Route path="payslips/:payslipId/trace" element={<PayTrace />} />
 
               <Route element={<ProtectedRoute allowedRoles={['HR_PAYROLL_USER', 'HR_PAYROLL_MANAGER', 'ADMIN']} />}>
                 <Route path="payruns" element={<Payruns />} />

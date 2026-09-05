@@ -116,8 +116,8 @@ def test_fixed_rule():
     from app.services.payroll_engine import _compute_rule_amount
     from types import SimpleNamespace
     rule = SimpleNamespace(computation_method=ComputationMethod.FIXED, fixed_amount=Decimal(2000), quantity=Decimal(1), percentage=None, percentage_base=None, formula_expression=None)
-    amount, _ = _compute_rule_amount(rule, {"rules": {}, "categories": {}})
-    assert amount == Decimal("2000.00")
+    result = _compute_rule_amount(rule, {"rules": {}, "categories": {}})
+    assert result.amount == Decimal("2000.00")
 
 
 def test_missing_contract_produces_blocker(db):

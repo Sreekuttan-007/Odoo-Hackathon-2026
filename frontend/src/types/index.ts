@@ -341,6 +341,75 @@ export interface Payslip {
   updated_at: string | null;
 }
 
+// PayTrace (Phase 7) — a deterministic explanation of one Payslip,
+// rebuilt entirely from persisted historical snapshots. See
+// backend/app/services/paytrace.py.
+export interface PayTraceCalculation {
+  fixed_amount?: string;
+  quantity?: string;
+  percentage?: string;
+  base_code?: string;
+  base_label?: string;
+  base_amount?: string;
+  formula?: string;
+  inputs?: Record<string, string>;
+}
+
+export interface PayTraceEntry {
+  sequence: number;
+  rule_name: string;
+  rule_code: string;
+  category: 'BASIC' | 'ALLOWANCE' | 'GROSS' | 'DEDUCTION' | 'NET';
+  method: 'FIXED' | 'PERCENTAGE' | 'FORMULA';
+  quantity: string | null;
+  result: string;
+  calculation: PayTraceCalculation | null;
+  explanation: string;
+  depends_on: string[];
+  has_structured_history: boolean;
+}
+
+export interface PayTraceComponent {
+  rule_code: string;
+  rule_name: string;
+  amount: string;
+}
+
+export interface PayTraceAggregates {
+  basic: string;
+  allowances: string;
+  gross: string;
+  deductions: string;
+  net: string;
+  gross_components: PayTraceComponent[];
+  net_components: PayTraceComponent[];
+}
+
+export interface PayTraceAvailable {
+  available: true;
+  employee: { id: number; name: string; employee_code: string | null };
+  period: { start: string; end: string };
+  salary_structure: { id: number; name: string };
+  contract: { reference: string; wage_monthly: string; currency: string } | null;
+  entries: PayTraceEntry[];
+  aggregates: PayTraceAggregates;
+}
+
+export interface PayTraceUnavailable {
+  available: false;
+  reason: 'NOT_COMPUTED' | 'NO_LINES';
+  message: string;
+}
+
+export type PayTrace = PayTraceAvailable | PayTraceUnavailable;
+
+export interface PayTraceNarration {
+  available: boolean;
+  reason: string | null;
+  summary: string | null;
+  components: { rule_code: string; explanation: string }[] | null;
+}
+
 export interface PayslipSummary {
   id: number;
   payrun_id: number;

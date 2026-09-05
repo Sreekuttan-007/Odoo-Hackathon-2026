@@ -268,3 +268,53 @@ compute overtime for a given day.
   environment — "Send Payslips" is intentionally not built rather than
   faked), and any statutory/compliance claim (rules named PF/PT are
   calculation examples only, not statutory filings).
+
+## Phase 7 — PayTrace
+
+- **PayTrace** is a read-only explanation layer over an already-computed
+  Payslip — it never calculates payroll itself. `GET
+  /api/payroll/payslips/{id}/trace` rebuilds a structured, deterministic
+  trace entirely from each `PayslipLine`'s own snapshot fields, never from
+  the current `SalaryRule` row or `Contract`. This is a stronger guarantee
+  than "historical snapshots are real" above: it means PayTrace survives
+  not just a Salary Rule edit but also a Contract wage edit after the
+  Payslip was computed, because `PayslipLine.base_amount_snapshot`
+  captures the resolved Contract Wage (or referenced rule's amount) used
+  at that moment, not a live lookup.
+- **Calculation Trace**: one entry per `PayslipLine`, in rule `sequence`
+  order (never alphabetized), each carrying its computation method
+  (FIXED/PERCENTAGE/FORMULA), a structured `calculation` object specific
+  to that method, a human `explanation` string, and `depends_on` — the
+  other rule codes (if any) this entry's amount was derived from, used
+  for the UI's hover-to-highlight dependency feature.
+  - FIXED: `fixed_amount_snapshot` (+ quantity if not 1).
+  - PERCENTAGE: `percentage_snapshot`, `base_code_snapshot` ("CONTRACT_WAGE"
+    or another rule's code), `base_amount_snapshot` (that base's resolved
+    value at compute time).
+  - FORMULA: the formula text (reused from the existing
+    `base_description_snapshot`) plus `formula_inputs_snapshot` — a JSON
+    map of every `rules["CODE"]`/`categories["CODE"]`/context-variable
+    name the formula actually referenced, resolved to its value at that
+    same compute time. Extracted via `formula_engine.extract_inputs()`, a
+    read-only AST walk that mirrors (but never replaces) the existing
+    whitelisted `evaluate_formula()` — it cannot execute anything the
+    safe evaluator wouldn't already have executed.
+- **Legacy Payslips**: lines computed before Phase 7 have `NULL` for all
+  five new snapshot columns. PayTrace reports `has_structured_history:
+  false` for those and falls back to the pre-existing
+  `base_description_snapshot` string rather than fabricating structured
+  numbers it doesn't actually have.
+- **AI Narrator** (`GET .../trace/explain`, Phase 7B) is optional and
+  strictly explanatory: it receives only the already-built deterministic
+  trace (rule codes/categories/methods/amounts, the employee's first name,
+  the period) — never DB access, never the ability to compute payroll.
+  Gated by the optional `ANTHROPIC_API_KEY` env var; unset in this
+  environment, so the endpoint has been exercised only through its
+  fallback path (`available: false, reason: "NOT_CONFIGURED"`), plus unit
+  tests simulating a timeout and a malformed/hallucinating response —
+  not against a live provider call. Any failure (missing key, timeout,
+  rate limit, malformed output) degrades to `available: false`; it never
+  raises, and the deterministic `/trace` endpoint is unaffected regardless
+  of this endpoint's outcome. The model's output is validated before use:
+  any `components[].rule_code` not matching a real rule code in the trace
+  sent to it is silently dropped.

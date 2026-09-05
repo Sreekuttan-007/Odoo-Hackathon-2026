@@ -26,6 +26,7 @@ Policy (documented per docs/DOMAIN_TERMS.md):
   already computed with the old rule — only a fresh recompute picks up
   the new rule, and recompute is blocked once VALIDATED/PAID.
 """
+import json
 from datetime import date, datetime, timezone
 from decimal import Decimal, ROUND_HALF_UP
 from typing import NamedTuple, Optional
@@ -184,7 +185,19 @@ def _build_context(db: Session, employee: Employee, contract: Contract, period_s
     }
 
 
-def _compute_rule_amount(rule: SalaryRule, context: dict) -> tuple[Decimal, str]:
+class RuleAmount(NamedTuple):
+    amount: Decimal
+    base_desc: str
+    # Structured PayTrace snapshot fields (Phase 7) — None where not
+    # applicable to this rule's computation_method.
+    fixed_amount: Optional[Decimal] = None
+    percentage: Optional[Decimal] = None
+    base_code: Optional[str] = None
+    base_amount: Optional[Decimal] = None
+    formula_inputs: Optional[dict] = None
+
+
+def _compute_rule_amount(rule: SalaryRule, context: dict) -> RuleAmount:
     quantity = Decimal(rule.quantity) if rule.quantity is not None else Decimal(1)
 
     if rule.computation_method == ComputationMethod.FIXED:
@@ -192,7 +205,7 @@ def _compute_rule_amount(rule: SalaryRule, context: dict) -> tuple[Decimal, str]
             raise formula_engine.FormulaError("Fixed rule has no fixed_amount configured.")
         amount = Decimal(rule.fixed_amount) * quantity
         base_desc = f"Fixed {rule.fixed_amount}" + (f" x{quantity}" if quantity != 1 else "")
-        return q2(amount), base_desc
+        return RuleAmount(q2(amount), base_desc, fixed_amount=Decimal(rule.fixed_amount))
 
     if rule.computation_method == ComputationMethod.PERCENTAGE:
         if rule.percentage is None or not rule.percentage_base:
@@ -207,13 +220,17 @@ def _compute_rule_amount(rule: SalaryRule, context: dict) -> tuple[Decimal, str]
             base_label = rule.percentage_base
         amount = base_value * (Decimal(rule.percentage) / Decimal(100)) * quantity
         base_desc = f"{rule.percentage}% of {base_label} ({base_value})"
-        return q2(amount), base_desc
+        return RuleAmount(
+            q2(amount), base_desc,
+            percentage=Decimal(rule.percentage), base_code=rule.percentage_base, base_amount=base_value,
+        )
 
     if rule.computation_method == ComputationMethod.FORMULA:
         if not rule.formula_expression:
             raise formula_engine.FormulaError("Formula rule has no formula_expression configured.")
         amount = formula_engine.evaluate_formula(rule.formula_expression, context) * quantity
-        return q2(amount), rule.formula_expression
+        inputs = formula_engine.extract_inputs(rule.formula_expression, context)
+        return RuleAmount(q2(amount), rule.formula_expression, formula_inputs=inputs)
 
     raise formula_engine.FormulaError(f"Unsupported computation method: {rule.computation_method}")
 
@@ -255,7 +272,7 @@ def compute_payslip(db: Session, payslip: Payslip) -> None:
 
     for rule in active_rules:
         try:
-            amount, base_desc = _compute_rule_amount(rule, context)
+            result = _compute_rule_amount(rule, context)
         except formula_engine.FormulaError as exc:
             payslip.warnings.append(PayrollWarning(
                 severity=WarningSeverity.BLOCKER, code="RULE_FAILURE",
@@ -263,6 +280,7 @@ def compute_payslip(db: Session, payslip: Payslip) -> None:
             ))
             continue
 
+        amount = result.amount
         context["rules"][rule.code] = amount
         context["categories"][rule.category.value] = context["categories"].get(rule.category.value, Decimal(0)) + amount
 
@@ -273,9 +291,17 @@ def compute_payslip(db: Session, payslip: Payslip) -> None:
             category_snapshot=rule.category,
             sequence_snapshot=rule.sequence,
             computation_method_snapshot=rule.computation_method,
-            base_description_snapshot=base_desc,
+            base_description_snapshot=result.base_desc,
             amount=amount,
             quantity=rule.quantity,
+            fixed_amount_snapshot=result.fixed_amount,
+            percentage_snapshot=result.percentage,
+            base_code_snapshot=result.base_code,
+            base_amount_snapshot=result.base_amount,
+            formula_inputs_snapshot=(
+                json.dumps({k: str(v) for k, v in result.formula_inputs.items()})
+                if result.formula_inputs is not None else None
+            ),
         ))
 
     payslip.basic = context["categories"].get("BASIC", Decimal(0))

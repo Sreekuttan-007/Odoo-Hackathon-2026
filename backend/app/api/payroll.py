@@ -18,7 +18,7 @@ from app.schemas.payroll import (
     PayslipResponse, PayslipSummaryResponse, PayslipLineResponse, PayrollWarningResponse,
 )
 from app.api.deps import get_current_user, get_current_payroll_operator, get_current_payroll_manager, HR_CAPABLE_ROLES
-from app.services import payroll_engine, payslip_pdf
+from app.services import payroll_engine, payslip_pdf, paytrace, payroll_narrator
 from app.services.schedule_calculator import build_schedule_summary
 
 router = APIRouter()
@@ -439,3 +439,42 @@ def get_payslip_pdf(payslip_id: int, db: Session = Depends(get_db), current_user
     pdf_bytes = payslip_pdf.generate_payslip_pdf(payslip)
     filename = f"{payslip.employee.employee_code or payslip.employee_id}.pdf"
     return Response(content=pdf_bytes, media_type="application/pdf", headers={"Content-Disposition": f'inline; filename="{filename}"'})
+
+
+@router.get("/payroll/payslips/{payslip_id}/trace")
+def get_payslip_trace(payslip_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    """PayTrace (Phase 7): a deterministic, read-only explanation of how this
+    Payslip's Net Pay was calculated, rebuilt entirely from persisted
+    PayslipLine snapshots — never from the current (possibly since-edited)
+    SalaryRule configuration. See app/services/paytrace.py."""
+    payslip = db.query(Payslip).filter(Payslip.id == payslip_id).first()
+    if not payslip:
+        raise HTTPException(404, detail={"error": {"code": "NOT_FOUND", "message": "Payslip not found."}})
+    _assert_payslip_access(current_user, payslip)
+    return paytrace.build_paytrace(payslip)
+
+
+@router.get("/payroll/payslips/{payslip_id}/trace/explain")
+def get_payslip_trace_explanation(
+    payslip_id: int,
+    mode: str = "employee",
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """PayTrace AI Narrator (Phase 7B, optional): translates the verified
+    deterministic trace into plain language. Never computes payroll, never
+    overrides trace values, and degrades to `available: False` on any
+    provider failure — the deterministic trace above always stands on its
+    own regardless of this endpoint's outcome."""
+    payslip = db.query(Payslip).filter(Payslip.id == payslip_id).first()
+    if not payslip:
+        raise HTTPException(404, detail={"error": {"code": "NOT_FOUND", "message": "Payslip not found."}})
+    _assert_payslip_access(current_user, payslip)
+
+    trace = paytrace.build_paytrace(payslip)
+    if not trace["available"]:
+        raise HTTPException(400, detail={"error": {"code": "TRACE_UNAVAILABLE", "message": trace["message"]}})
+
+    if mode not in ("employee", "payroll"):
+        mode = "employee"
+    return payroll_narrator.explain(trace, mode=mode)

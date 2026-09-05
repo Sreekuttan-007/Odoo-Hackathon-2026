@@ -9,7 +9,7 @@ import { SkeletonDetail } from '../components/ui/Skeleton';
 import { Button } from '../components/ui/Button';
 import { formatDate, formatMoney } from '../lib/format';
 import { openPayslipPdf } from '../lib/pdf';
-import { ArrowLeft, FileDown, AlertTriangle, Calendar, Clock, Building2 } from 'lucide-react';
+import { ArrowLeft, FileDown, AlertTriangle, Calendar, Clock, Building2, Sparkles } from 'lucide-react';
 
 export function PayslipDetail() {
   const { payslipId } = useParams();
@@ -71,6 +71,14 @@ export function PayslipDetail() {
           </div>
           <div className="flex items-center gap-3">
             <StatusBadge status={payslip.status} />
+            <Button
+              variant="secondary" size="sm"
+              disabled={!payslip.computed_at}
+              title={payslip.computed_at ? undefined : 'Payroll has not been computed yet'}
+              onClick={() => navigate(`/payroll/payslips/${payslip.id}/trace`)}
+            >
+              <Sparkles className="w-3.5 h-3.5" /> Explain Salary
+            </Button>
             <Button variant="secondary" size="sm" loading={downloading} onClick={handleDownload}>
               <FileDown className="w-3.5 h-3.5" /> PDF
             </Button>
@@ -80,7 +88,7 @@ export function PayslipDetail() {
         {payslip.warnings.length > 0 && (
           <div className="mt-4 space-y-2">
             {payslip.warnings.map(w => (
-              <div key={w.id} className={`flex items-start gap-2 text-sm p-2.5 rounded-md ${w.severity === 'BLOCKER' ? 'bg-red-50 text-red-700' : 'bg-amber-50 text-amber-700'}`}>
+              <div key={w.id} className={`flex items-start gap-2 text-sm p-2.5 rounded-md ${w.severity === 'BLOCKER' ? 'bg-danger-50 text-danger-700' : 'bg-warning-50 text-warning-700'}`}>
                 <AlertTriangle className="w-3.5 h-3.5 mt-0.5 shrink-0" /><span>{w.message}</span>
               </div>
             ))}
@@ -127,7 +135,7 @@ export function PayslipDetail() {
           <div className="flex justify-between text-sm"><span className="text-gray-600">Basic</span><span className="text-gray-900">{formatMoney(payslip.basic)}</span></div>
           <div className="flex justify-between text-sm"><span className="text-gray-600">Allowances</span><span className="text-gray-900">{formatMoney(payslip.allowances)}</span></div>
           <div className="flex justify-between text-sm font-medium border-t border-gray-100 pt-2"><span className="text-gray-700">Gross Salary</span><span className="text-gray-900">{formatMoney(payslip.gross)}</span></div>
-          <div className="flex justify-between text-sm"><span className="text-gray-600">Deductions</span><span className="text-red-600">−{formatMoney(payslip.deductions)}</span></div>
+          <div className="flex justify-between text-sm"><span className="text-gray-600">Deductions</span><span className="text-danger-600">−{formatMoney(payslip.deductions)}</span></div>
           <div className="flex justify-between text-base font-semibold border-t border-gray-200 pt-2 mt-1"><span className="text-gray-900">Net Salary</span><span className="text-brand-700">{formatMoney(payslip.net)}</span></div>
         </div>
       </SectionCard>
