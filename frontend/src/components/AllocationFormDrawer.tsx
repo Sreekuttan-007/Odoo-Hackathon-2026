@@ -87,7 +87,7 @@ export function AllocationFormDrawer({ isOpen, onClose, onSaved, fixedEmployee }
     >
       <form id="allocation-form" onSubmit={handleSubmit} className="space-y-4">
         {error && (
-          <div className="flex items-start gap-2 text-sm text-red-700 bg-red-50 border border-red-100 p-3 rounded-md">
+          <div className="flex items-start gap-2 text-sm text-danger-700 bg-danger-50 border border-danger-100 p-3 rounded-md">
             <AlertTriangle className="w-4 h-4 mt-0.5 shrink-0" />
             <span>{error}</span>
           </div>

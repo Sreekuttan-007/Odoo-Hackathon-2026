@@ -89,7 +89,7 @@ export function PayrunWizard() {
       <PageHeader title="New Payrun" description={step === 1 ? 'Step 1 of 2 · Payroll Scope' : `Step 2 of 2 · Select Employees`} />
 
       {error && (
-        <div className="flex items-start gap-2 text-sm text-red-700 bg-red-50 border border-red-100 p-3 rounded-md">
+        <div className="flex items-start gap-2 text-sm text-danger-700 bg-danger-50 border border-danger-100 p-3 rounded-md">
           <AlertTriangle className="w-4 h-4 mt-0.5 shrink-0" /><span>{error}</span>
         </div>
       )}
@@ -155,7 +155,7 @@ export function PayrunWizard() {
                   {c.eligible ? (
                     <span className="text-sm font-medium text-gray-900">{c.wage_monthly ? formatMoney(c.wage_monthly) : '—'}</span>
                   ) : (
-                    <span className="text-xs text-red-600">Ineligible — {c.reason}</span>
+                    <span className="text-xs text-danger-600">Ineligible — {c.reason}</span>
                   )}
                 </div>
               </div>

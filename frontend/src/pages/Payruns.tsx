@@ -67,7 +67,7 @@ export function Payruns() {
                     <td className="px-6 py-3 whitespace-nowrap"><StatusBadge status={p.status} /></td>
                     <td className="px-6 py-3 whitespace-nowrap text-sm">
                       {p.warning_count > 0 ? (
-                        <span className="inline-flex items-center gap-1 text-amber-700"><AlertTriangle className="w-3.5 h-3.5" /> {p.warning_count}</span>
+                        <span className="inline-flex items-center gap-1 text-warning-700"><AlertTriangle className="w-3.5 h-3.5" /> {p.warning_count}</span>
                       ) : (
                         <span className="text-gray-400">—</span>
                       )}

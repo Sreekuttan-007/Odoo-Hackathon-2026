@@ -129,7 +129,7 @@ export function EmployeeFormModal({ isOpen, onClose, onSaved, employee }: Employ
       }
     >
       <form id="employee-form" onSubmit={handleSubmit} className="space-y-6">
-        {error && <div className="text-sm text-red-700 bg-red-50 border border-red-100 p-3 rounded-md">{error}</div>}
+        {error && <div className="text-sm text-danger-700 bg-danger-50 border border-danger-100 p-3 rounded-md">{error}</div>}
 
         <div>
           <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-3">Identity</p>

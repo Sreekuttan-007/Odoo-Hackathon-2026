@@ -71,17 +71,17 @@ export function AttendanceWidget() {
       <button
         onClick={() => setOpen(o => !o)}
         className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-medium transition-colors ${
-          checkedIn ? 'border-green-200 bg-green-50 text-green-700' : 'border-gray-200 bg-white text-gray-600 hover:bg-gray-50'
+          checkedIn ? 'border-brand-200 bg-brand-50 text-brand-700' : 'border-gray-200 bg-white text-gray-600 hover:bg-gray-50'
         }`}
       >
-        <span className={`w-1.5 h-1.5 rounded-full ${checkedIn ? 'bg-green-500' : 'bg-gray-300'}`} />
+        <span className={`w-1.5 h-1.5 rounded-full ${checkedIn ? 'bg-brand-500' : 'bg-gray-300'}`} />
         {checkedIn ? `Checked in · ${formatMinutes(elapsed)}` : 'Not checked in'}
       </button>
 
       {open && (
         <div className="absolute right-0 mt-2 w-72 rounded-lg border border-gray-200 bg-white shadow-[var(--shadow-popover)] p-4 z-30">
           {error && (
-            <div className="flex items-start gap-2 text-xs text-red-700 bg-red-50 border border-red-100 p-2.5 rounded-md mb-3">
+            <div className="flex items-start gap-2 text-xs text-danger-700 bg-danger-50 border border-danger-100 p-2.5 rounded-md mb-3">
               <AlertCircle className="w-3.5 h-3.5 mt-0.5 shrink-0" />
               {error}
             </div>

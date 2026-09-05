@@ -44,8 +44,8 @@ function StatCard({
 }) {
   const tones = {
     indigo: 'bg-brand-50 text-brand-700',
-    green: 'bg-green-50 text-green-700',
-    amber: 'bg-amber-50 text-amber-700',
+    green: 'bg-brand-50 text-brand-700',
+    amber: 'bg-warning-50 text-warning-700',
     orange: 'bg-orange-50 text-orange-700',
   };
 
@@ -172,7 +172,7 @@ export function Dashboard() {
       </section>
 
       {failedSections.length > 0 && (
-        <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+        <div className="rounded-lg border border-warning-200 bg-warning-50 px-4 py-3 text-sm text-warning-800">
           Some dashboard sections could not be loaded: {failedSections.join(', ')}. The available sections are still shown.
         </div>
       )}
@@ -205,7 +205,7 @@ export function Dashboard() {
           <div className="divide-y divide-gray-100">
             {recentRequests.length === 0 ? (
               <div className="px-5 py-10 text-center">
-                <CheckCircle2 className="mx-auto h-8 w-8 text-green-500" />
+                <CheckCircle2 className="mx-auto h-8 w-8 text-brand-500" />
                 <p className="mt-3 text-sm font-medium text-gray-900">Nothing needs review</p>
                 <p className="mt-1 text-sm text-gray-500">New requests will appear here.</p>
               </div>
@@ -222,7 +222,7 @@ export function Dashboard() {
                 </div>
                 <div className="shrink-0 text-right">
                   <p className="text-xs font-medium text-gray-700">{formatDate(request.start_date)}</p>
-                  <p className="mt-1 text-xs text-amber-700">To approve</p>
+                  <p className="mt-1 text-xs text-warning-700">To approve</p>
                 </div>
               </Link>
             ))}
@@ -267,7 +267,7 @@ export function Dashboard() {
       <section className="grid gap-4 sm:grid-cols-3">
         <Link to="/attendance" className="bezel group">
           <div className="bezel-core p-5 transition group-hover:-translate-y-0.5">
-            <CalendarCheck className="h-5 w-5 text-green-600" />
+            <CalendarCheck className="h-5 w-5 text-brand-600" />
             <h2 className="mt-4 font-semibold text-gray-900 font-display">Attendance</h2>
             <p className="mt-1 text-sm text-gray-500">Review today&apos;s workday records and missing check-outs.</p>
             <span className="mt-4 inline-flex items-center gap-1 text-sm font-medium text-brand-700">Open module <ArrowRight className="h-4 w-4 transition group-hover:translate-x-0.5" /></span>

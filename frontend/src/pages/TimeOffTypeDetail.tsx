@@ -122,7 +122,7 @@ export function TimeOffTypeDetail() {
 
         {editing ? (
           <div className="mt-6 space-y-4">
-            {formError && <div className="text-sm text-red-700 bg-red-50 border border-red-100 p-3 rounded-md">{formError}</div>}
+            {formError && <div className="text-sm text-danger-700 bg-danger-50 border border-danger-100 p-3 rounded-md">{formError}</div>}
             <div>
               <label className="block text-xs font-medium text-gray-600 mb-1.5">Type Name</label>
               <input value={name} onChange={e => setName(e.target.value)} className={inputClass} />
@@ -135,7 +135,7 @@ export function TimeOffTypeDetail() {
                   <option value="HOURS">Hours</option>
                 </select>
                 {unit !== type.unit && (
-                  <p className="mt-1 text-xs text-amber-700 flex items-center gap-1"><AlertTriangle className="w-3 h-3" /> Blocked if this type is already referenced.</p>
+                  <p className="mt-1 text-xs text-warning-700 flex items-center gap-1"><AlertTriangle className="w-3 h-3" /> Blocked if this type is already referenced.</p>
                 )}
               </div>
               <div>

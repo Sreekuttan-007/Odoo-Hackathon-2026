@@ -92,8 +92,8 @@ export function Login() {
 
           <form onSubmit={handleSubmit} className="space-y-4">
             {error && (
-              <div className="rounded-md bg-red-50 border border-red-100 px-3 py-2.5">
-                <p className="text-sm text-red-700">{error}</p>
+              <div className="rounded-md bg-danger-50 border border-danger-100 px-3 py-2.5">
+                <p className="text-sm text-danger-700">{error}</p>
               </div>
             )}
 

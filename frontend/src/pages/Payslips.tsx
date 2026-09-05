@@ -73,7 +73,7 @@ export function Payslips() {
                   <tr key={p.id} onClick={() => navigate(`/payroll/payslips/${p.id}`)} className="hover:bg-gray-50 cursor-pointer transition-colors">
                     {!isEmployee && <td className="px-6 py-3 whitespace-nowrap text-sm font-medium text-gray-900">{p.employee.first_name} {p.employee.last_name}</td>}
                     <td className="px-6 py-3 whitespace-nowrap text-sm">
-                      {p.warning_count > 0 ? <span className="inline-flex items-center gap-1 text-amber-700"><AlertTriangle className="w-3.5 h-3.5" /> {p.warning_count}</span> : <span className="text-gray-400">—</span>}
+                      {p.warning_count > 0 ? <span className="inline-flex items-center gap-1 text-warning-700"><AlertTriangle className="w-3.5 h-3.5" /> {p.warning_count}</span> : <span className="text-gray-400">—</span>}
                     </td>
                     <td className="px-6 py-3 whitespace-nowrap text-sm text-gray-600">{formatDate(p.period_start)} – {formatDate(p.period_end)}</td>
                     <td className="px-6 py-3 whitespace-nowrap text-sm text-gray-600">{formatMoney(p.basic)}</td>

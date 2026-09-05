@@ -94,7 +94,7 @@ export function Departments() {
                     onChange={e => setEditValue(e.target.value)}
                     className="flex-1 h-8 rounded-md border border-gray-300 px-2 text-sm focus:outline-none focus:ring-1 focus:ring-brand-500"
                   />
-                  <button onClick={() => handleRename(dept.id)} className="text-green-600 hover:text-green-700"><Check className="w-4 h-4" /></button>
+                  <button onClick={() => handleRename(dept.id)} className="text-brand-600 hover:text-brand-700"><Check className="w-4 h-4" /></button>
                   <button onClick={() => setEditingId(null)} className="text-gray-400 hover:text-gray-600"><X className="w-4 h-4" /></button>
                 </div>
               ) : (

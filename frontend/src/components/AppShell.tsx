@@ -76,7 +76,7 @@ export function AppShell() {
       {/* Sidebar */}
       <aside className="w-60 flex-shrink-0 bg-white border-r border-gray-200 flex flex-col">
         <div className="flex h-14 shrink-0 items-center gap-2.5 px-5 border-b border-gray-100">
-          <div className="h-7 w-7 rounded-lg bg-brand-600 flex items-center justify-center shadow-[0_2px_6px_-1px_rgb(20,122,92,0.4)]">
+          <div className="brand-mark h-7 w-7 rounded-lg bg-brand-600 flex items-center justify-center shadow-[0_2px_6px_-1px_rgb(20,122,92,0.4)]">
             <span className="text-white text-xs font-bold font-display">P</span>
           </div>
           <span className="text-[16px] font-bold text-gray-900 tracking-tight font-display">Payloom</span>
@@ -93,15 +93,16 @@ export function AppShell() {
                   <NavLink
                     key={item.to}
                     to={item.to}
+                    data-active={location.pathname.startsWith(item.to)}
                     className={({ isActive }) =>
-                      `flex items-center gap-2.5 px-3 py-1.5 rounded-lg text-[13px] transition-colors duration-150 ${
+                      `nav-link flex items-center gap-2.5 px-3 py-1.5 rounded-lg text-[13px] transition-colors duration-150 ${
                         isActive
                           ? 'bg-brand-50 text-brand-700 font-semibold'
                           : 'text-gray-600 font-medium hover:bg-gray-50 hover:text-gray-900'
                       }`
                     }
                   >
-                    <item.icon className="w-4 h-4 shrink-0" />
+                    <item.icon className="w-4 h-4 shrink-0 transition-transform duration-150" />
                     <span className="truncate">{item.label}</span>
                   </NavLink>
                 ))}
@@ -114,8 +115,9 @@ export function AppShell() {
               <p className="px-3 mb-1.5 text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Administration</p>
               <NavLink
                 to="/admin/users"
+                data-active={location.pathname.startsWith('/admin/users')}
                 className={({ isActive }) =>
-                  `flex items-center gap-2.5 px-3 py-1.5 rounded-md text-[13px] font-medium transition-colors duration-150 ${
+                  `nav-link flex items-center gap-2.5 px-3 py-1.5 rounded-md text-[13px] font-medium transition-colors duration-150 ${
                     isActive ? 'bg-brand-50 text-brand-700' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
                   }`
                 }
@@ -154,7 +156,9 @@ export function AppShell() {
         </header>
 
         <main className="flex-1 overflow-y-auto p-6">
-          <Outlet />
+          <div key={location.pathname} className="page-transition">
+            <Outlet />
+          </div>
         </main>
       </div>
     </div>

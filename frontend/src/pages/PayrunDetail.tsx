@@ -121,7 +121,7 @@ export function PayrunDetail() {
           </div>
           <div>
             <p className="text-xs text-gray-400 uppercase tracking-wide">Warnings</p>
-            <p className={`text-lg font-semibold ${payrun.warning_count > 0 ? 'text-amber-700' : 'text-gray-900'}`}>{payrun.warning_count}</p>
+            <p className={`text-lg font-semibold ${payrun.warning_count > 0 ? 'text-warning-700' : 'text-gray-900'}`}>{payrun.warning_count}</p>
           </div>
         </div>
 
@@ -143,7 +143,7 @@ export function PayrunDetail() {
         {blockers && blockers.length > 0 && (
           <div className="mt-4 space-y-2">
             {blockers.map((b, i) => (
-              <div key={i} className="flex items-start gap-2 text-sm text-red-700 bg-red-50 border border-red-100 p-3 rounded-md">
+              <div key={i} className="flex items-start gap-2 text-sm text-danger-700 bg-danger-50 border border-danger-100 p-3 rounded-md">
                 <AlertTriangle className="w-4 h-4 mt-0.5 shrink-0" />
                 <span><strong>{b.employee}</strong>: {b.messages.join(' ')}</span>
               </div>
@@ -156,11 +156,11 @@ export function PayrunDetail() {
         <SectionCard>
           <h2 className="text-sm font-semibold text-gray-900 mb-3">Payroll checks</h2>
           {allWarnings.length === 0 ? (
-            <p className="text-sm text-green-700 flex items-center gap-1.5"><CheckCircle2 className="w-4 h-4" /> No issues found.</p>
+            <p className="text-sm text-brand-700 flex items-center gap-1.5"><CheckCircle2 className="w-4 h-4" /> No issues found.</p>
           ) : (
             <div className="space-y-2">
               {allWarnings.map(({ employee, warning }) => (
-                <div key={warning.id} className={`flex items-start gap-2 text-sm p-2.5 rounded-md ${warning.severity === 'BLOCKER' ? 'bg-red-50 text-red-700' : 'bg-amber-50 text-amber-700'}`}>
+                <div key={warning.id} className={`flex items-start gap-2 text-sm p-2.5 rounded-md ${warning.severity === 'BLOCKER' ? 'bg-danger-50 text-danger-700' : 'bg-warning-50 text-warning-700'}`}>
                   <AlertTriangle className="w-3.5 h-3.5 mt-0.5 shrink-0" />
                   <span><strong>{employee.first_name} {employee.last_name}</strong>: {warning.message}</span>
                 </div>
@@ -194,7 +194,7 @@ export function PayrunDetail() {
                     <Link to={`/payroll/payslips/${p.id}`} className="hover:text-brand-700">{p.employee.first_name} {p.employee.last_name}</Link>
                   </td>
                   <td className="px-6 py-3 whitespace-nowrap text-sm">
-                    {p.warning_count > 0 ? <span className="inline-flex items-center gap-1 text-amber-700"><AlertTriangle className="w-3.5 h-3.5" /> {p.warning_count}</span> : <span className="text-gray-400">—</span>}
+                    {p.warning_count > 0 ? <span className="inline-flex items-center gap-1 text-warning-700"><AlertTriangle className="w-3.5 h-3.5" /> {p.warning_count}</span> : <span className="text-gray-400">—</span>}
                   </td>
                   <td className="px-6 py-3 whitespace-nowrap text-sm text-gray-600">{formatMoney(p.basic)}</td>
                   <td className="px-6 py-3 whitespace-nowrap text-sm text-gray-600">{formatMoney(p.gross)}</td>

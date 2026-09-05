@@ -101,7 +101,7 @@ export function TimeOffRequestFormDrawer({ isOpen, onClose, onSaved, fixedEmploy
     >
       <form id="request-form" onSubmit={handleSubmit} className="space-y-4">
         {error && (
-          <div className="flex items-start gap-2 text-sm text-red-700 bg-red-50 border border-red-100 p-3 rounded-md">
+          <div className="flex items-start gap-2 text-sm text-danger-700 bg-danger-50 border border-danger-100 p-3 rounded-md">
             <AlertTriangle className="w-4 h-4 mt-0.5 shrink-0" />
             <span>{error}</span>
           </div>
@@ -153,7 +153,7 @@ export function TimeOffRequestFormDrawer({ isOpen, onClose, onSaved, fixedEmploy
         {selectedType?.requires_allocation && balance && (
           <div className="rounded-md border border-brand-100 bg-brand-50 p-3 text-sm text-brand-800">
             <p>{formatAmount(balance.remaining, balance.unit)} available.</p>
-            {balance.allocation_id === null && <p className="mt-1 text-amber-700">No approved allocation covers this period yet — the request will be rejected until one exists.</p>}
+            {balance.allocation_id === null && <p className="mt-1 text-warning-700">No approved allocation covers this period yet — the request will be rejected until one exists.</p>}
           </div>
         )}
 

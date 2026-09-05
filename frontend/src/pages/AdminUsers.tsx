@@ -150,7 +150,7 @@ export function AdminUsers() {
                       </button>
                       <button
                         onClick={() => toggleStatus(user)}
-                        className={`transition-colors ${user.status === 'ACTIVE' ? 'text-gray-400 hover:text-red-600' : 'text-gray-400 hover:text-green-600'}`}
+                        className={`transition-colors ${user.status === 'ACTIVE' ? 'text-gray-400 hover:text-danger-600' : 'text-gray-400 hover:text-brand-600'}`}
                         title={user.status === 'ACTIVE' ? 'Deactivate' : 'Activate'}
                       >
                         {user.status === 'ACTIVE' ? <UserX className="w-4 h-4" /> : <UserCheck className="w-4 h-4" />}

@@ -25,11 +25,11 @@ export function ToastViewport({ toasts }: { toasts: ToastState[] }) {
       {toasts.map(t => (
         <div
           key={t.id}
-          className={`flex items-center gap-2 rounded-lg shadow-[var(--shadow-popover)] px-4 py-3 text-sm font-medium border transition-all duration-150 ${
-            t.variant === 'success' ? 'bg-white border-green-200 text-green-800' : 'bg-white border-red-200 text-red-800'
+          className={`animate-toast-in flex items-center gap-2 rounded-lg shadow-[var(--shadow-popover)] px-4 py-3 text-sm font-medium border ${
+            t.variant === 'success' ? 'bg-white border-brand-200 text-brand-800' : 'bg-white border-danger-100 text-danger-700'
           }`}
         >
-          {t.variant === 'success' ? <CheckCircle2 className="w-4 h-4 text-green-500" /> : <XCircle className="w-4 h-4 text-red-500" />}
+          {t.variant === 'success' ? <CheckCircle2 className="w-4 h-4 text-brand-500" /> : <XCircle className="w-4 h-4 text-danger-500" />}
           {t.message}
         </div>
       ))}

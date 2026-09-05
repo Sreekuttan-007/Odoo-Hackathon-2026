@@ -121,7 +121,7 @@ export function AttendanceDetail() {
         </div>
 
         {record.status === 'MISSING_CHECKOUT' && !editing && (
-          <div className="mt-4 flex items-start gap-2 text-sm text-amber-800 bg-amber-50 border border-amber-100 p-3 rounded-md">
+          <div className="mt-4 flex items-start gap-2 text-sm text-warning-800 bg-warning-50 border border-warning-100 p-3 rounded-md">
             <AlertTriangle className="w-4 h-4 mt-0.5 shrink-0" />
             This session was never checked out. {canCorrect ? 'Use "Correct" to fix it.' : 'An HR administrator needs to correct it.'}
           </div>
@@ -129,7 +129,7 @@ export function AttendanceDetail() {
 
         {editing ? (
           <div className="mt-6 space-y-4">
-            {formError && <div className="text-sm text-red-700 bg-red-50 border border-red-100 p-3 rounded-md">{formError}</div>}
+            {formError && <div className="text-sm text-danger-700 bg-danger-50 border border-danger-100 p-3 rounded-md">{formError}</div>}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="block text-xs font-medium text-gray-600 mb-1.5">Check In</label>

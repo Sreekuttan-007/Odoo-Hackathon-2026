@@ -94,7 +94,7 @@ export function UserFormDrawer({ isOpen, onClose, onSaved, user }: UserFormDrawe
       }
     >
       <form id="user-form" onSubmit={handleSubmit} className="space-y-4">
-        {error && <div className="text-sm text-red-700 bg-red-50 border border-red-100 p-3 rounded-md">{error}</div>}
+        {error && <div className="text-sm text-danger-700 bg-danger-50 border border-danger-100 p-3 rounded-md">{error}</div>}
 
         {!isEdit && (
           <div>

@@ -178,7 +178,7 @@ export function WorkingScheduleForm() {
               const row = rows[day];
               const { hours, error } = rowHours(row);
               return (
-                <div key={day} className={`flex flex-wrap items-center gap-3 rounded-lg border px-3.5 py-2.5 transition-colors ${row.enabled ? (error ? 'border-red-200 bg-red-50/50' : 'border-gray-200') : 'border-gray-100 bg-gray-50/50'}`}>
+                <div key={day} className={`flex flex-wrap items-center gap-3 rounded-lg border px-3.5 py-2.5 transition-colors ${row.enabled ? (error ? 'border-danger-200 bg-danger-50/50' : 'border-gray-200') : 'border-gray-100 bg-gray-50/50'}`}>
                   <label className="flex items-center gap-2 w-28 shrink-0">
                     <input type="checkbox" checked={row.enabled} onChange={e => updateRow(day, { enabled: e.target.checked })}
                       className="rounded border-gray-300 text-brand-600 focus:ring-brand-500" />
@@ -197,7 +197,7 @@ export function WorkingScheduleForm() {
                       </div>
                       <div className="ml-auto flex items-center gap-1.5 text-sm font-semibold">
                         <Clock className="w-3.5 h-3.5 text-gray-400" />
-                        {error ? <span className="text-red-600 text-xs font-normal">{error}</span> : <span className="text-gray-900">{hours}h</span>}
+                        {error ? <span className="text-danger-600 text-xs font-normal">{error}</span> : <span className="text-gray-900">{hours}h</span>}
                       </div>
                     </>
                   )}

@@ -119,7 +119,7 @@ export function AttendancePage() {
                       {r.check_out ? (
                         <span className="text-gray-600">{formatTime(r.check_out)}</span>
                       ) : r.status === 'MISSING_CHECKOUT' ? (
-                        <span className="inline-flex items-center gap-1 text-amber-700"><AlertTriangle className="w-3.5 h-3.5" /> Missing</span>
+                        <span className="inline-flex items-center gap-1 text-warning-700"><AlertTriangle className="w-3.5 h-3.5" /> Missing</span>
                       ) : (
                         <span className="text-gray-400">—</span>
                       )}
