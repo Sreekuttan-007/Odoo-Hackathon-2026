@@ -5,6 +5,11 @@ from app.core.config import settings
 
 from app.api.auth import router as auth_router
 from app.api.admin_users import router as admin_users_router
+from app.api.departments import router as departments_router
+from app.api.job_positions import router as job_positions_router
+from app.api.employees import router as employees_router
+from app.api.contracts import router as contracts_router
+from app.api.working_schedules import router as working_schedules_router
 
 app = FastAPI(
     title="PeoplePay360 API",
@@ -42,3 +47,8 @@ def health_check():
 
 app.include_router(auth_router, prefix="/api/auth", tags=["Authentication"])
 app.include_router(admin_users_router, prefix="/api/admin", tags=["Admin Users"])
+app.include_router(departments_router, prefix="/api", tags=["Departments"])
+app.include_router(job_positions_router, prefix="/api", tags=["Job Positions"])
+app.include_router(employees_router, prefix="/api", tags=["Employees"])
+app.include_router(contracts_router, prefix="/api", tags=["Contracts"])
+app.include_router(working_schedules_router, prefix="/api", tags=["Working Schedules"])

@@ -40,3 +40,17 @@ def get_current_admin(current_user: User = Depends(get_current_user)) -> User:
             detail={"error": {"code": "ACCESS_DENIED", "message": "You don't have access to this area."}}
         )
     return current_user
+
+
+HR_CAPABLE_ROLES = {"HR_MANAGER", "HR_PAYROLL_USER", "HR_PAYROLL_MANAGER", "ADMIN"}
+
+
+def get_current_hr(current_user: User = Depends(get_current_user)) -> User:
+    """Employees/Contracts/Working Schedules administration is restricted to
+    HR-capable roles; plain EMPLOYEE accounts have read-only access."""
+    if current_user.role not in HR_CAPABLE_ROLES:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail={"error": {"code": "ACCESS_DENIED", "message": "You don't have access to this area."}}
+        )
+    return current_user

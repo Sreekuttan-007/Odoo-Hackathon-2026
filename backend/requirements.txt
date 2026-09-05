@@ -10,3 +10,5 @@ passlib[bcrypt]
 bcrypt==4.0.1
 PyJWT
 email-validator
+pytest
+httpx

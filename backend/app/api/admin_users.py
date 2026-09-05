@@ -6,7 +6,7 @@ from app.db.database import get_db
 from app.models.user import User
 from app.models.employee import Employee
 from app.schemas.user import UserResponse, UserCreate, UserUpdate
-from app.schemas.employee import EmployeeResponse
+from app.schemas.employee import EmployeeMinimal
 from app.api.deps import get_current_admin
 from app.core.security import get_password_hash
 
@@ -92,7 +92,7 @@ def update_user(
     db.refresh(user)
     return user
 
-@router.get("/employees/lookup", response_model=List[EmployeeResponse])
+@router.get("/employees/lookup", response_model=List[EmployeeMinimal])
 def get_employees_for_lookup(db: Session = Depends(get_db), current_admin: User = Depends(get_current_admin)):
     # Return employees that don't have a user account
     employees = db.query(Employee).outerjoin(User).filter(User.id == None).all()

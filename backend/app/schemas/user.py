@@ -2,7 +2,7 @@ from pydantic import BaseModel, EmailStr
 from typing import Optional
 from datetime import datetime
 from app.models.user import Role, AccountStatus
-from app.schemas.employee import EmployeeResponse
+from app.schemas.employee import EmployeeMinimal
 
 class UserBase(BaseModel):
     work_email: str
@@ -21,7 +21,7 @@ class UserUpdate(BaseModel):
 class UserResponse(UserBase):
     id: int
     employee_id: int
-    employee: Optional[EmployeeResponse] = None
+    employee: Optional[EmployeeMinimal] = None
     created_at: datetime
     updated_at: Optional[datetime]
 
