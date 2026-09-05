@@ -36,6 +36,7 @@
 /payroll/salary-structures
 /payroll/salary-structures/:structureId
 /payroll/salary-rules
+/payroll/simulator
 
 /admin/users
 ```

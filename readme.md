@@ -84,6 +84,7 @@ Payslip Lines explain WHY
 | **Payslips** | Real payroll computation, line-by-line salary trace, warnings and historical snapshots |
 | **Payslip PDF** | Generates a real PDF from persisted payroll data |
 | **Payroll Preflight** | Surfaces blockers and warnings before payroll is validated |
+| **Payroll Simulator** | Deterministic what-if scenarios — reruns the real Salary Rule engine against temporary overrides, never persists anything |
 
 ---
 
@@ -267,6 +268,41 @@ recomputes every Payslip and then re-runs the whole Preflight engine on the
 backend; if any blocker exists it aborts (`409 VALIDATION_BLOCKED`). A stale
 "READY" in the browser — or a direct API call — cannot bypass it. If Payloom
 says **READY TO VALIDATE**, the backend actually checked.
+
+---
+
+## Payroll Simulator — What-If Analysis
+
+> **PayTrace explains WHY. Preflight checks IF IT'S SAFE. Simulator answers WHAT IF.**
+
+"What happens if we change HRA from 20% to 25% before we actually change it?"
+The Simulator answers this by rerunning **the exact same Salary Rule engine**
+used for real payroll — never a second calculator — against temporary,
+in-memory rule overrides for a chosen structure, period and employee set.
+
+```text
+Real Salary Rules + Temporary Overrides + Employees + Period
+                        ↓
+              Canonical Payroll Engine
+                        ↓
+              Ephemeral Simulation Result
+                        ↓
+                    Discarded
+```
+
+**Nothing is ever persisted.** Overridden rules exist only as transient
+objects that are never added to the database session — there is no code
+path that can write them, by construction, not by convention. No Payrun,
+Payslip, or PayslipLine is created. A change to an upstream rule (e.g. HRA)
+correctly recalculates every downstream value (GROSS, NET) through the real
+formula dependency chain — never a hand-added delta — while unrelated rules
+(BASIC, PF) are correctly left unchanged.
+
+Available at `/payroll/simulator` for `HR_PAYROLL_MANAGER`/`ADMIN` only.
+Shows per-employee and company-wide impact, a component-level breakdown per
+rule, and — only when the selected period looks like one calendar month —
+an annualized estimate (`monthly delta × 12`), clearly labeled as an
+assumption, never a forecast.
 
 ---
 

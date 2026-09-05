@@ -311,3 +311,30 @@
   that Payslip's `lines[]` amounts grouped by category — never independently
   edited. `warnings[]` carries severity (`BLOCKER`/`WARNING`/`INFO`), code,
   and message for every issue found on that Payslip.
+
+## Payroll Simulator (Phase 9)
+- `POST /api/payroll/simulator/run` — `HR_PAYROLL_MANAGER`/`ADMIN` only
+  (`403` otherwise, including `HR_PAYROLL_USER`). Body: `{salary_structure_id,
+  period_start, period_end, employee_ids[], rule_overrides[]}` where each
+  override is `{rule_id, computation_method?, fixed_amount?, percentage?,
+  base_code?, formula_expression?, quantity?}` — only the fields relevant
+  to the (possibly overridden) computation method are read. `rule_id` must
+  belong to the given structure (`400 INVALID_OVERRIDE` otherwise).
+- **Read-only by construction**: never creates a Payrun/Payslip/PayslipLine,
+  never writes to SalaryRule/SalaryStructure/Contract/Employee. Overridden
+  rules exist only as transient, never-`db.add()`'d SalaryRule instances
+  for the duration of the request.
+- Employee eligibility is re-validated server-side with the exact same
+  `check_eligibility`/applicable-contract resolver a real Payrun uses — an
+  employee with no applicable contract, or a genuinely overlapping
+  Payslip, is excluded with a real reason (`exclusion_code`/
+  `exclusion_reason`), never given a fabricated result.
+- Response includes, per employee: current vs. simulated category totals,
+  net delta and delta %, a `status` (`INCREASED`/`DECREASED`/`UNCHANGED`/
+  `EXCLUDED`), and `components[]` — every rule's current vs. simulated
+  amount with `changed` reflecting the real recalculated dependency chain
+  (an HRA % change correctly leaves BASIC/PF unchanged but updates
+  GROSS/NET). Also an `aggregate` block (company-wide totals/deltas,
+  employees increased/decreased/unchanged) and, only when the period
+  spans 28–31 days, `annualized_net_delta_estimate` (`monthly delta × 12`,
+  explicitly an estimate, not a forecast).

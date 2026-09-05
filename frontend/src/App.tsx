@@ -28,6 +28,7 @@ import { PayrunDetail } from './pages/PayrunDetail';
 import { Payslips } from './pages/Payslips';
 import { PayslipDetail } from './pages/PayslipDetail';
 import { PayTrace } from './pages/PayTrace';
+import { Simulator } from './pages/Simulator';
 import { Dashboard } from './pages/Dashboard';
 
 function App() {
@@ -81,6 +82,10 @@ function App() {
                 <Route path="salary-structures" element={<SalaryStructures />} />
                 <Route path="salary-structures/:structureId" element={<SalaryStructureDetail />} />
                 <Route path="salary-rules" element={<SalaryRules />} />
+              </Route>
+
+              <Route element={<ProtectedRoute allowedRoles={['HR_PAYROLL_MANAGER', 'ADMIN']} />}>
+                <Route path="simulator" element={<Simulator />} />
               </Route>
             </Route>
             

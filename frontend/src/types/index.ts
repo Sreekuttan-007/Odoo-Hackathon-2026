@@ -265,6 +265,83 @@ export interface SalaryStructureDetail extends SalaryStructure {
   rules: SalaryRule[];
 }
 
+// Payroll Simulator (Phase 9) — deterministic what-if scenarios. Never
+// persisted; see backend/app/services/simulator.py for the invariant.
+export interface RuleOverrideInput {
+  rule_id: number;
+  computation_method?: ComputationMethod;
+  fixed_amount?: string;
+  percentage?: string;
+  base_code?: string;
+  formula_expression?: string;
+  quantity?: string;
+}
+
+export interface SimulatedLine {
+  rule_code: string;
+  rule_name: string;
+  category: RuleCategory;
+  sequence: number;
+  method: ComputationMethod;
+  current_amount: string | null;
+  simulated_amount: string | null;
+  changed: boolean;
+}
+
+export interface ScenarioTotals {
+  basic: string;
+  allowances: string;
+  gross: string;
+  deductions: string;
+  net: string;
+}
+
+export interface EmployeeSimulationResult {
+  employee_id: number;
+  employee_name: string;
+  department: string | null;
+  excluded: boolean;
+  exclusion_code: string | null;
+  exclusion_reason: string | null;
+  current: ScenarioTotals | null;
+  simulated: ScenarioTotals | null;
+  delta_gross: string | null;
+  delta_deductions: string | null;
+  delta_net: string | null;
+  delta_net_percent: string | null;
+  status: 'INCREASED' | 'DECREASED' | 'UNCHANGED' | 'EXCLUDED';
+  components: SimulatedLine[];
+}
+
+export interface AggregateImpact {
+  current_total_gross: string;
+  simulated_total_gross: string;
+  delta_gross: string;
+  current_total_deductions: string;
+  simulated_total_deductions: string;
+  delta_deductions: string;
+  current_total_net: string;
+  simulated_total_net: string;
+  delta_net: string;
+  employees_increased: number;
+  employees_decreased: number;
+  employees_unchanged: number;
+  is_monthly_period: boolean;
+  annualized_net_delta_estimate: string | null;
+}
+
+export interface SimulatorRunResponse {
+  salary_structure_id: number;
+  salary_structure_name: string;
+  period_start: string;
+  period_end: string;
+  employees_selected: number;
+  employees_simulated: number;
+  employees_excluded: number;
+  aggregate: AggregateImpact;
+  employees: EmployeeSimulationResult[];
+}
+
 export interface EligibleEmployee {
   employee: EmployeeMinimal;
   eligible: boolean;

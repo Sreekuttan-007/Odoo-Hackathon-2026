@@ -1,7 +1,7 @@
 import { Outlet, NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { AttendanceWidget } from './AttendanceWidget';
-import { LogOut, LayoutDashboard, Users, FileText, Building2, Clock, CalendarCheck, PlaneTakeoff, Wallet, ShieldCheck } from 'lucide-react';
+import { LogOut, LayoutDashboard, Users, FileText, Building2, Clock, CalendarCheck, PlaneTakeoff, Wallet, ShieldCheck, FlaskConical } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import type { Role } from '../types';
 
@@ -19,6 +19,7 @@ interface NavGroup {
 
 const HR_ROLES: Role[] = ['HR_MANAGER', 'HR_PAYROLL_USER', 'HR_PAYROLL_MANAGER', 'ADMIN'];
 const PAYROLL_OPERATOR_ROLES: Role[] = ['HR_PAYROLL_USER', 'HR_PAYROLL_MANAGER', 'ADMIN'];
+const PAYROLL_CONFIG_ROLES: Role[] = ['HR_PAYROLL_MANAGER', 'ADMIN'];
 
 const NAV_GROUPS: NavGroup[] = [
   { label: '', items: [{ to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard }] },
@@ -47,6 +48,7 @@ const NAV_GROUPS: NavGroup[] = [
       { to: '/payroll/payslips', label: 'Payslips', icon: Wallet },
       { to: '/payroll/salary-structures', label: 'Salary Structures', icon: Wallet, roles: PAYROLL_OPERATOR_ROLES },
       { to: '/payroll/salary-rules', label: 'Salary Rules', icon: Wallet, roles: PAYROLL_OPERATOR_ROLES },
+      { to: '/payroll/simulator', label: 'Simulator', icon: FlaskConical, roles: PAYROLL_CONFIG_ROLES },
     ],
   },
 ];

@@ -136,7 +136,12 @@ def generate_reference(db: Session, period_start: date) -> str:
     return reference
 
 
-def _build_context(db: Session, employee: Employee, contract: Contract, period_start: date, period_end: date) -> dict:
+def build_calculation_context(db: Session, employee: Employee, contract: Contract, period_start: date, period_end: date) -> dict:
+    """The canonical, reusable calculation core (Phase 9: also used by the
+    Payroll Simulator to run temporary what-if rule sets against real
+    context — never a second engine). Builds every context value a Salary
+    Rule formula can read; execute_rules() then runs an ordered rule list
+    against a (possibly re-used) copy of this dict."""
     attendance_records = (
         db.query(Attendance)
         .filter(
@@ -238,11 +243,56 @@ def _compute_rule_amount(rule: SalaryRule, context: dict) -> RuleAmount:
     raise formula_engine.FormulaError(f"Unsupported computation method: {rule.computation_method}")
 
 
+class ComputedLine(NamedTuple):
+    rule: SalaryRule
+    result: RuleAmount
+
+
+def execute_rules(active_rules: list[SalaryRule], base_context: dict) -> tuple[list[ComputedLine], dict, list[tuple[str, str]]]:
+    """The canonical rule-execution core (Phase 9: reused verbatim by the
+    Payroll Simulator — never a second calculator). Runs `active_rules` in
+    the order given (callers are responsible for sequence-ordering and
+    is_active filtering) against a fresh copy of `base_context` — the
+    caller's `base_context` dict itself is never mutated, so it's safe to
+    reuse the same one across multiple execute_rules() calls (e.g. a
+    simulator comparing current vs. overridden rules for one employee
+    without re-querying attendance/time-off twice).
+
+    A rule computation failure (unknown dependency, bad formula, etc.)
+    never becomes a silent 0 — it's returned as a warning entry and the
+    rule is omitted from `rules`/`categories`, so anything downstream that
+    depends on it fails too, visibly."""
+    context = {**base_context, "rules": {}, "categories": {}}
+    lines: list[ComputedLine] = []
+    warnings: list[tuple[str, str]] = []
+    for rule in active_rules:
+        try:
+            result = _compute_rule_amount(rule, context)
+        except formula_engine.FormulaError as exc:
+            warnings.append(("RULE_FAILURE", f"Rule {rule.code} failed: {exc}"))
+            continue
+        context["rules"][rule.code] = result.amount
+        context["categories"][rule.category.value] = context["categories"].get(rule.category.value, Decimal(0)) + result.amount
+        lines.append(ComputedLine(rule=rule, result=result))
+    return lines, context["categories"], warnings
+
+
+def active_structure_rules(structure_rules: list[SalaryRule]) -> list[SalaryRule]:
+    """Active rules from a SalaryStructure, in execution order. Shared by
+    compute_payslip and the Simulator so both filter/sort identically."""
+    return sorted([r for r in structure_rules if r.is_active], key=lambda r: r.sequence)
+
+
 def compute_payslip(db: Session, payslip: Payslip) -> None:
     """Recomputes one Payslip in place: clears prior lines/warnings, resolves
     the applicable Contract, builds context, executes the structure's active
     rules in sequence, and sets category totals. Never raises — failures
-    become BLOCKER PayrollWarnings attached to this payslip."""
+    become BLOCKER PayrollWarnings attached to this payslip.
+
+    This is a thin persistence wrapper around build_calculation_context() +
+    execute_rules() — the actual calculation logic lives entirely in those
+    two functions so the Simulator (Phase 9) can reuse exactly the same
+    engine against temporary, unpersisted rule overrides."""
     payslip.lines.clear()
     payslip.warnings.clear()
 
@@ -263,30 +313,19 @@ def compute_payslip(db: Session, payslip: Payslip) -> None:
 
     contract = eligibility.contract
     payslip.contract_id = contract.id
-    context = _build_context(db, payslip.employee, contract, payslip.period_start, payslip.period_end)
-    payslip.worked_days = context["worked_days"]
-    payslip.expected_work_days = context["expected_work_days"]
-    payslip.worked_hours = q2(context["worked_hours"])
+    base_context = build_calculation_context(db, payslip.employee, contract, payslip.period_start, payslip.period_end)
+    payslip.worked_days = base_context["worked_days"]
+    payslip.expected_work_days = base_context["expected_work_days"]
+    payslip.worked_hours = q2(base_context["worked_hours"])
 
-    active_rules = sorted(
-        [r for r in payslip.salary_structure.rules if r.is_active],
-        key=lambda r: r.sequence,
-    )
+    active_rules = active_structure_rules(payslip.salary_structure.rules)
+    lines, categories, warning_entries = execute_rules(active_rules, base_context)
 
-    for rule in active_rules:
-        try:
-            result = _compute_rule_amount(rule, context)
-        except formula_engine.FormulaError as exc:
-            payslip.warnings.append(PayrollWarning(
-                severity=WarningSeverity.BLOCKER, code="RULE_FAILURE",
-                message=f"Rule {rule.code} failed: {exc}",
-            ))
-            continue
+    for code, message in warning_entries:
+        payslip.warnings.append(PayrollWarning(severity=WarningSeverity.BLOCKER, code=code, message=message))
 
-        amount = result.amount
-        context["rules"][rule.code] = amount
-        context["categories"][rule.category.value] = context["categories"].get(rule.category.value, Decimal(0)) + amount
-
+    for computed in lines:
+        rule, result = computed.rule, computed.result
         payslip.lines.append(PayslipLine(
             salary_rule_id=rule.id,
             rule_name_snapshot=rule.name,
@@ -295,7 +334,7 @@ def compute_payslip(db: Session, payslip: Payslip) -> None:
             sequence_snapshot=rule.sequence,
             computation_method_snapshot=rule.computation_method,
             base_description_snapshot=result.base_desc,
-            amount=amount,
+            amount=result.amount,
             quantity=rule.quantity,
             fixed_amount_snapshot=result.fixed_amount,
             percentage_snapshot=result.percentage,
@@ -307,11 +346,11 @@ def compute_payslip(db: Session, payslip: Payslip) -> None:
             ),
         ))
 
-    payslip.basic = context["categories"].get("BASIC", Decimal(0))
-    payslip.allowances = context["categories"].get("ALLOWANCE", Decimal(0))
-    payslip.gross = context["categories"].get("GROSS", Decimal(0))
-    payslip.deductions = context["categories"].get("DEDUCTION", Decimal(0))
-    payslip.net = context["categories"].get("NET", Decimal(0))
+    payslip.basic = categories.get("BASIC", Decimal(0))
+    payslip.allowances = categories.get("ALLOWANCE", Decimal(0))
+    payslip.gross = categories.get("GROSS", Decimal(0))
+    payslip.deductions = categories.get("DEDUCTION", Decimal(0))
+    payslip.net = categories.get("NET", Decimal(0))
     payslip.warning_count = len(payslip.warnings)
     payslip.computed_at = now_utc()
 
