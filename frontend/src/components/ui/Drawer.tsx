@@ -1,4 +1,5 @@
-import type { ReactNode } from 'react';
+import { useEffect, type ReactNode } from 'react';
+import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
 
 interface DrawerProps {
@@ -10,9 +11,21 @@ interface DrawerProps {
 }
 
 export function Drawer({ isOpen, onClose, title, children, footer }: DrawerProps) {
+  useEffect(() => {
+    if (!isOpen) return;
+    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && onClose();
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, [isOpen, onClose]);
+
   if (!isOpen) return null;
 
-  return (
+  // Rendered through a portal to document.body so the fixed-position overlay is
+  // anchored to the viewport, not to any ancestor that establishes a containing
+  // block (e.g. the `.page-transition` / `.bezel` wrappers keep a lingering
+  // `transform` after their mount animation, which would otherwise trap and clip
+  // this drawer inside the page content area).
+  return createPortal(
     <div className="fixed inset-0 z-50">
       <div className="fixed inset-0 bg-gray-900/30 transition-opacity" onClick={onClose} />
       <div className="fixed inset-y-0 right-0 flex max-w-full">
@@ -33,6 +46,7 @@ export function Drawer({ isOpen, onClose, title, children, footer }: DrawerProps
           to { transform: translateX(0); opacity: 1; }
         }
       `}</style>
-    </div>
+    </div>,
+    document.body,
   );
 }

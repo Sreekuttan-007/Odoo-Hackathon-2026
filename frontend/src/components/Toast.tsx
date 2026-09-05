@@ -1,4 +1,5 @@
 import { useState, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { CheckCircle2, XCircle } from 'lucide-react';
 
 interface ToastState {
@@ -20,7 +21,7 @@ export function useToast() {
 }
 
 export function ToastViewport({ toasts }: { toasts: ToastState[] }) {
-  return (
+  return createPortal(
     <div className="fixed bottom-6 right-6 z-50 space-y-2">
       {toasts.map(t => (
         <div
@@ -33,6 +34,7 @@ export function ToastViewport({ toasts }: { toasts: ToastState[] }) {
           {t.message}
         </div>
       ))}
-    </div>
+    </div>,
+    document.body,
   );
 }

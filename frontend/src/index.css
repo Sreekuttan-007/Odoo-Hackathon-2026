@@ -116,6 +116,11 @@
   }
 }
 
+/* `to` frames resolve `transform` back to `none` (not `translateY(0)`), so that
+   with `animation-fill-mode: both` the settled element does NOT keep a transform.
+   A lingering non-`none` transform turns the element into a containing block for
+   `position: fixed` descendants, which was trapping/clipping overlays (drawers,
+   toasts) inside `.page-transition` / `.bezel` wrappers on every page. */
 @keyframes load-in {
   from {
     opacity: 0;
@@ -123,7 +128,7 @@
   }
   to {
     opacity: 1;
-    transform: translateY(0);
+    transform: none;
   }
 }
 
@@ -134,7 +139,7 @@
   }
   to {
     opacity: 1;
-    transform: translateY(0);
+    transform: none;
   }
 }
 
