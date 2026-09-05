@@ -13,7 +13,7 @@ from app.schemas.contract import ContractResponse, ContractCreate, ContractUpdat
 from app.schemas.employee import EmployeeMinimal
 from app.schemas.department import DepartmentResponse
 from app.schemas.job_position import JobPositionResponse
-from app.api.deps import get_current_user, get_current_hr
+from app.api.deps import get_current_user, get_current_hr, HR_CAPABLE_ROLES
 from app.services import contract_rules
 from app.services.schedule_calculator import build_schedule_summary
 
@@ -62,7 +62,11 @@ def list_contracts(
     search: Optional[str] = None,
 ):
     query = db.query(Contract)
+    if current_user.role not in HR_CAPABLE_ROLES:
+        query = query.filter(Contract.employee_id == current_user.employee_id)
     if employee_id is not None:
+        if current_user.role not in HR_CAPABLE_ROLES and employee_id != current_user.employee_id:
+            raise HTTPException(403, detail={"error": {"code": "ACCESS_DENIED", "message": "You don't have access to these contracts."}})
         query = query.filter(Contract.employee_id == employee_id)
     if search:
         query = query.filter(Contract.reference.ilike(f"%{search}%"))
@@ -85,6 +89,8 @@ def get_applicable_contract(
     """Exposes getApplicableContract() for later Payroll integration and demo
     purposes. Returns the single contract applicable to the given period, or
     a clear MISSING_CONTRACT / CONTRACT_CONFLICT error."""
+    if current_user.role not in HR_CAPABLE_ROLES and employee_id != current_user.employee_id:
+        raise HTTPException(403, detail={"error": {"code": "ACCESS_DENIED", "message": "You don't have access to this contract."}})
     try:
         contract = contract_rules.get_applicable_contract(db, employee_id, period_start, period_end)
     except contract_rules.NoApplicableContractError:
@@ -106,7 +112,10 @@ def get_contract(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    contract = db.query(Contract).filter(Contract.id == contract_id).first()
+    query = db.query(Contract).filter(Contract.id == contract_id)
+    if current_user.role not in HR_CAPABLE_ROLES:
+        query = query.filter(Contract.employee_id == current_user.employee_id)
+    contract = query.first()
     if not contract:
         raise HTTPException(404, detail={"error": {"code": "NOT_FOUND", "message": "Contract not found."}})
     return _to_response(contract)

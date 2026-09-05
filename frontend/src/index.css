@@ -1,21 +1,30 @@
 @import "tailwindcss";
 
 @theme {
-  /* Payloom accent — one deliberate brand color (deep indigo/loom-thread) */
-  --color-brand-50: #f2f2fd;
-  --color-brand-100: #e6e6fb;
-  --color-brand-200: #cdccf7;
-  --color-brand-300: #a6a3f0;
-  --color-brand-400: #8480e8;
-  --color-brand-500: #6a63e0;
-  --color-brand-600: #564fd1;
-  --color-brand-700: #4741ab;
-  --color-brand-800: #383488;
-  --color-brand-900: #26236b;
+  /* Typography — Syne carries headlines with real character, Plus Jakarta
+     Sans stays legible at table density, JetBrains Mono marks anything
+     numeric (codes, references, wages) as data rather than prose. */
+  --font-sans: 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif;
+  --font-display: 'Syne', 'Plus Jakarta Sans', ui-sans-serif, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, 'SF Mono', monospace;
 
-  /* Remap the neutral scale from cool slate to a warm-neutral tone, so every
-     existing bg-gray, text-gray and border-gray class across the app
-     inherits the new "calm enterprise" palette without per-file edits. */
+  /* Payloom accent — "Ledger" emerald. A payroll system lives in the
+     register, not the pitch deck: deep jewel green instead of the
+     indigo/blue every SaaS admin panel defaults to. */
+  --color-brand-50: #eefbf6;
+  --color-brand-100: #d2f3e6;
+  --color-brand-200: #a5e7ce;
+  --color-brand-300: #70d3b0;
+  --color-brand-400: #3fb68f;
+  --color-brand-500: #1f9973;
+  --color-brand-600: #147a5c;
+  --color-brand-700: #106049;
+  --color-brand-800: #0d4b3a;
+  --color-brand-900: #093226;
+
+  /* Warm-paper neutral scale, so every existing bg-gray, text-gray and
+     border-gray class across the app inherits the "calm enterprise"
+     undertone without per-file edits. */
   --color-gray-50: #faf9f7;
   --color-gray-100: #f4f2ef;
   --color-gray-200: #e7e4de;
@@ -27,14 +36,72 @@
   --color-gray-800: #332e29;
   --color-gray-900: #1f1c19;
 
-  --shadow-elevation: 0 1px 2px 0 rgb(0 0 0 / 0.04), 0 1px 3px 0 rgb(0 0 0 / 0.03);
-  --shadow-popover: 0 4px 6px -1px rgb(0 0 0 / 0.06), 0 8px 24px -4px rgb(0 0 0 / 0.08);
+  --shadow-elevation: 0 1px 2px 0 rgb(31 28 25 / 0.04), 0 1px 3px 0 rgb(31 28 25 / 0.03);
+  --shadow-popover: 0 4px 6px -1px rgb(31 28 25 / 0.06), 0 8px 24px -4px rgb(31 28 25 / 0.08);
+
+  /* Double-bezel + CTA primitives */
+  --shadow-bezel: 0 1px 1px rgb(31 28 25 / 0.03), 0 4px 10px -4px rgb(31 28 25 / 0.06),
+    0 16px 32px -12px rgb(31 28 25 / 0.08);
+  --shadow-bezel-hover: 0 1px 1px rgb(31 28 25 / 0.04), 0 8px 16px -6px rgb(20 122 92 / 0.12),
+    0 20px 40px -14px rgb(20 122 92 / 0.16);
+  --glow-brand: 0 0 0 1px rgb(20 122 92 / 0.14), 0 0 32px -6px rgb(20 122 92 / 0.4);
 }
 
 @layer base {
   body {
     @apply antialiased text-gray-900;
     background: var(--color-gray-50);
+    font-family: var(--font-sans);
+  }
+  h1, h2, h3 {
+    font-family: var(--font-display);
+    letter-spacing: -0.01em;
+  }
+}
+
+@layer components {
+  /* Double-bezel container: a tinted outer shell around a lifted inner
+     core, so primary surfaces never sit flat on the page background. */
+  .bezel {
+    @apply rounded-[1.75rem] bg-gray-100/70 p-1.5 ring-1 ring-black/5;
+  }
+  .bezel-core {
+    @apply rounded-[1.375rem] bg-white ring-1 ring-black/[0.04];
+    box-shadow: var(--shadow-bezel);
+  }
+
+  .eyebrow {
+    @apply inline-flex items-center gap-1.5 rounded-full bg-brand-50 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.2em] text-brand-700;
+  }
+
+  /* Button-in-button CTA: reserved for the one or two hero moments per
+     screen (sign-in, a dashboard's primary action) — not every button. */
+  .btn-pill-cta {
+    @apply inline-flex items-center gap-3 rounded-full bg-brand-600 py-2 pl-6 pr-2 text-sm font-semibold text-white transition-all duration-200 hover:bg-brand-700 disabled:opacity-60;
+    box-shadow: var(--shadow-bezel);
+  }
+  .btn-pill-cta:hover:not(:disabled) {
+    box-shadow: var(--shadow-bezel-hover);
+  }
+  .btn-pill-cta-icon {
+    @apply flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white/15;
+  }
+}
+
+@keyframes load-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .animate-load-in {
+    animation: load-in 0.4s cubic-bezier(0.16, 1, 0.3, 1) both;
   }
 }
 

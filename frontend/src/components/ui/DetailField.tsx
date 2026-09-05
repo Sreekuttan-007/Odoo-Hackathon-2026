@@ -11,7 +11,7 @@ export function DetailField({ icon: Icon, label, value, valueNode }: DetailField
   return (
     <div className="flex items-start gap-3">
       {Icon && (
-        <div className="mt-0.5 h-7 w-7 rounded-md bg-gray-50 border border-gray-100 flex items-center justify-center shrink-0">
+        <div className="mt-0.5 h-7 w-7 rounded-lg bg-gray-50 border border-gray-100 flex items-center justify-center shrink-0">
           <Icon className="w-3.5 h-3.5 text-gray-400" />
         </div>
       )}

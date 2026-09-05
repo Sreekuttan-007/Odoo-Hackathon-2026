@@ -1,3 +1,20 @@
+const TONE: Record<string, string> = {
+  ACTIVE: 'bg-green-50 text-green-700',
+  RUNNING: 'bg-green-50 text-green-700',
+  APPROVED: 'bg-green-50 text-green-700',
+  COMPLETED: 'bg-gray-100 text-gray-500',
+  INACTIVE: 'bg-gray-100 text-gray-500',
+  EXPIRED: 'bg-gray-100 text-gray-500',
+  DRAFT: 'bg-gray-100 text-gray-500',
+  UPCOMING: 'bg-amber-50 text-amber-700',
+  TO_APPROVE: 'bg-amber-50 text-amber-700',
+  MISSING_CHECKOUT: 'bg-red-50 text-red-700',
+  REFUSED: 'bg-red-50 text-red-700',
+  COMPUTED: 'bg-blue-50 text-blue-700',
+  VALIDATED: 'bg-indigo-50 text-indigo-700',
+  PAID: 'bg-green-50 text-green-700',
+};
+
 const DOT: Record<string, string> = {
   ACTIVE: 'bg-green-500',
   RUNNING: 'bg-green-500',
@@ -13,23 +30,6 @@ const DOT: Record<string, string> = {
   COMPUTED: 'bg-blue-500',
   VALIDATED: 'bg-indigo-500',
   PAID: 'bg-green-500',
-};
-
-const TEXT: Record<string, string> = {
-  ACTIVE: 'text-green-700',
-  RUNNING: 'text-green-700',
-  APPROVED: 'text-green-700',
-  COMPLETED: 'text-gray-500',
-  INACTIVE: 'text-gray-500',
-  EXPIRED: 'text-gray-500',
-  DRAFT: 'text-gray-500',
-  UPCOMING: 'text-amber-700',
-  TO_APPROVE: 'text-amber-700',
-  MISSING_CHECKOUT: 'text-red-700',
-  REFUSED: 'text-red-700',
-  COMPUTED: 'text-blue-700',
-  VALIDATED: 'text-indigo-700',
-  PAID: 'text-green-700',
 };
 
 const LABELS: Record<string, string> = {
@@ -51,7 +51,7 @@ const LABELS: Record<string, string> = {
 
 export function StatusBadge({ status }: { status: string }) {
   return (
-    <span className={`inline-flex items-center gap-1.5 text-xs font-medium ${TEXT[status] || 'text-gray-500'}`}>
+    <span className={`inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-xs font-medium ${TONE[status] || 'bg-gray-100 text-gray-500'}`}>
       <span className={`w-1.5 h-1.5 rounded-full ${DOT[status] || 'bg-gray-400'}`} />
       {LABELS[status] || status}
     </span>

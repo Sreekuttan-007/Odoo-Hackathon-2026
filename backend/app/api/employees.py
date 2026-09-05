@@ -14,7 +14,7 @@ from app.models.user import User
 from app.schemas.employee import EmployeeResponse, EmployeeCreate, EmployeeUpdate, EmployeeMinimal
 from app.schemas.department import DepartmentResponse
 from app.schemas.job_position import JobPositionResponse
-from app.api.deps import get_current_user, get_current_hr
+from app.api.deps import get_current_user, get_current_hr, HR_CAPABLE_ROLES
 from app.services.schedule_calculator import build_schedule_summary
 
 router = APIRouter()
@@ -51,7 +51,7 @@ def _validate_relations(
             raise HTTPException(400, detail={"error": {"code": "NOT_FOUND", "message": "Manager not found."}})
 
 
-def _build_response(employee: Employee, contracts_count: int, attendance_count: int = 0, time_off_requests_count: int = 0) -> EmployeeResponse:
+def _build_response(employee: Employee, contracts_count: int, attendance_count: int = 0, time_off_requests_count: int = 0, include_manager: bool = True) -> EmployeeResponse:
     return EmployeeResponse(
         id=employee.id,
         employee_code=employee.employee_code,
@@ -66,7 +66,7 @@ def _build_response(employee: Employee, contracts_count: int, attendance_count: 
         working_schedule_id=employee.working_schedule_id,
         department=DepartmentResponse.model_validate(employee.department) if employee.department else None,
         job_position=JobPositionResponse.model_validate(employee.job_position) if employee.job_position else None,
-        manager=EmployeeMinimal.model_validate(employee.manager) if employee.manager else None,
+        manager=EmployeeMinimal.model_validate(employee.manager) if include_manager and employee.manager else None,
         working_schedule=build_schedule_summary(employee.working_schedule),
         contracts_count=contracts_count,
         attendance_count=attendance_count,
@@ -76,11 +76,11 @@ def _build_response(employee: Employee, contracts_count: int, attendance_count: 
     )
 
 
-def _to_response(db: Session, employee: Employee) -> EmployeeResponse:
+def _to_response(db: Session, employee: Employee, include_manager: bool = True) -> EmployeeResponse:
     contracts_count = db.query(Contract).filter(Contract.employee_id == employee.id).count()
     attendance_count = db.query(Attendance).filter(Attendance.employee_id == employee.id).count()
     time_off_requests_count = db.query(TimeOffRequest).filter(TimeOffRequest.employee_id == employee.id).count()
-    return _build_response(employee, contracts_count, attendance_count, time_off_requests_count)
+    return _build_response(employee, contracts_count, attendance_count, time_off_requests_count, include_manager)
 
 
 @router.get("/employees", response_model=List[EmployeeResponse])
@@ -95,6 +95,9 @@ def list_employees(
     limit: int = 200,
 ):
     query = db.query(Employee)
+    include_manager = current_user.role in HR_CAPABLE_ROLES
+    if not include_manager:
+        query = query.filter(Employee.id == current_user.employee_id)
 
     if search:
         term = f"%{search}%"
@@ -131,6 +134,7 @@ def list_employees(
             contract_counts.get(employee.id, 0),
             attendance_counts.get(employee.id, 0),
             time_off_counts.get(employee.id, 0),
+            include_manager=include_manager,
         )
         for employee in employees
     ]
@@ -142,10 +146,14 @@ def get_employee(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    employee = db.query(Employee).filter(Employee.id == employee_id).first()
+    include_manager = current_user.role in HR_CAPABLE_ROLES
+    query = db.query(Employee).filter(Employee.id == employee_id)
+    if not include_manager:
+        query = query.filter(Employee.id == current_user.employee_id)
+    employee = query.first()
     if not employee:
         raise HTTPException(404, detail={"error": {"code": "NOT_FOUND", "message": "Employee not found."}})
-    return _to_response(db, employee)
+    return _to_response(db, employee, include_manager=include_manager)
 
 
 @router.post("/employees", response_model=EmployeeResponse)

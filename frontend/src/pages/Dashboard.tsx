@@ -50,17 +50,19 @@ function StatCard({
   };
 
   return (
-    <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-[var(--shadow-elevation)]">
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <p className="text-xs font-medium uppercase tracking-wide text-gray-500">{label}</p>
-          <p className="mt-2 text-3xl font-semibold tracking-tight text-gray-900">{value}</p>
+    <div className="bezel">
+      <div className="bezel-core p-5">
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">{label}</p>
+            <p className="mt-2 text-3xl font-bold tracking-tight text-gray-900 font-display">{value}</p>
+          </div>
+          <div className={`rounded-xl p-2.5 ${tones[tone]}`}>
+            <Icon className="h-5 w-5" />
+          </div>
         </div>
-        <div className={`rounded-lg p-2.5 ${tones[tone]}`}>
-          <Icon className="h-5 w-5" />
-        </div>
+        <span className="mt-3 inline-flex rounded-full bg-gray-50 px-2.5 py-1 text-xs font-medium text-gray-500">{detail}</span>
       </div>
-      <p className="mt-3 text-sm text-gray-500">{detail}</p>
     </div>
   );
 }
@@ -127,23 +129,41 @@ export function Dashboard() {
 
   return (
     <div className="space-y-6">
-      <section className="rounded-2xl bg-brand-900 px-6 py-7 text-white shadow-[var(--shadow-popover)] sm:px-8">
-        <div className="flex flex-col justify-between gap-6 lg:flex-row lg:items-end">
+      <section
+        className="relative overflow-hidden rounded-[1.75rem] px-6 py-8 text-white sm:px-9"
+        style={{
+          background:
+            'radial-gradient(120% 140% at 100% 0%, rgb(31 153 115 / 0.45), transparent 55%), #093226',
+          boxShadow: 'var(--shadow-popover)',
+        }}
+      >
+        <div
+          className="pointer-events-none absolute inset-0 opacity-[0.06]"
+          style={{
+            backgroundImage:
+              'linear-gradient(rgb(255 255 255) 1px, transparent 1px), linear-gradient(90deg, rgb(255 255 255) 1px, transparent 1px)',
+            backgroundSize: '36px 36px',
+          }}
+        />
+        <div className="relative flex flex-col justify-between gap-6 lg:flex-row lg:items-end">
           <div>
-            <p className="text-sm font-medium text-brand-200">PeoplePay360 workspace</p>
-            <h1 className="mt-2 text-3xl font-semibold tracking-tight sm:text-4xl">
+            <span className="eyebrow bg-white/10 text-brand-200">Payloom workspace</span>
+            <h1 className="mt-3 text-3xl font-bold tracking-tight sm:text-4xl font-display">
               Good to see you, {user?.employee?.first_name ?? 'there'}.
             </h1>
             <p className="mt-2 max-w-xl text-sm leading-6 text-brand-100">
               A current view of your workforce, attendance, contracts, and time-off activity.
             </p>
           </div>
-          <div className="flex flex-wrap gap-2">
-            <Link to="/employees" className="inline-flex items-center gap-2 rounded-md bg-white px-3.5 py-2 text-sm font-medium text-brand-900 transition hover:bg-brand-50">
-              <Users className="h-4 w-4" /> View employees
+          <div className="flex flex-wrap items-center gap-3">
+            <Link to="/employees" className="btn-pill-cta bg-white text-brand-900 hover:bg-brand-50 shadow-none hover:shadow-none">
+              View employees
+              <span className="btn-pill-cta-icon bg-brand-900/10">
+                <Users className="h-4 w-4" />
+              </span>
             </Link>
             {canReview && (
-              <Link to="/time-off/requests?status=TO_APPROVE" className="inline-flex items-center gap-2 rounded-md border border-brand-400 px-3.5 py-2 text-sm font-medium text-white transition hover:bg-brand-800">
+              <Link to="/time-off/requests?status=TO_APPROVE" className="inline-flex items-center gap-2 rounded-full border border-white/25 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-white/10">
                 <PlaneTakeoff className="h-4 w-4" /> Review requests
               </Link>
             )}
@@ -171,10 +191,11 @@ export function Dashboard() {
       )}
 
       <div className="grid gap-6 xl:grid-cols-[1.15fr_0.85fr]">
-        <section className="rounded-xl border border-gray-200 bg-white shadow-[var(--shadow-elevation)]">
+        <section className="bezel">
+        <div className="bezel-core">
           <div className="flex items-center justify-between border-b border-gray-100 px-5 py-4">
             <div>
-              <h2 className="font-semibold text-gray-900">Pending time-off requests</h2>
+              <h2 className="font-semibold text-gray-900 font-display">Pending time-off requests</h2>
               <p className="mt-1 text-sm text-gray-500">Requests that need attention.</p>
             </div>
             <Link to="/time-off/requests" className="inline-flex items-center gap-1 text-sm font-medium text-brand-700 hover:text-brand-900">
@@ -206,11 +227,13 @@ export function Dashboard() {
               </Link>
             ))}
           </div>
+        </div>
         </section>
 
-        <section className="rounded-xl border border-gray-200 bg-white shadow-[var(--shadow-elevation)]">
+        <section className="bezel">
+        <div className="bezel-core">
           <div className="border-b border-gray-100 px-5 py-4">
-            <h2 className="font-semibold text-gray-900">Workforce by department</h2>
+            <h2 className="font-semibold text-gray-900 font-display">Workforce by department</h2>
             <p className="mt-1 text-sm text-gray-500">Active employees grouped by organization.</p>
           </div>
           <div className="space-y-4 p-5">
@@ -231,31 +254,40 @@ export function Dashboard() {
               );
             })}
           </div>
-          <div className="grid grid-cols-2 border-t border-gray-100">
-            <Link to="/departments" className="flex items-center gap-2 px-5 py-3 text-sm font-medium text-gray-600 hover:bg-gray-50 hover:text-gray-900"><Building2 className="h-4 w-4" /> Departments</Link>
-            <Link to="/working-schedules" className="flex items-center gap-2 border-l border-gray-100 px-5 py-3 text-sm font-medium text-gray-600 hover:bg-gray-50 hover:text-gray-900"><Clock3 className="h-4 w-4" /> Schedules</Link>
-          </div>
+          {canReview && (
+            <div className="grid grid-cols-2 border-t border-gray-100">
+              <Link to="/departments" className="flex items-center gap-2 px-5 py-3 text-sm font-medium text-gray-600 hover:bg-gray-50 hover:text-gray-900"><Building2 className="h-4 w-4" /> Departments</Link>
+              <Link to="/working-schedules" className="flex items-center gap-2 border-l border-gray-100 px-5 py-3 text-sm font-medium text-gray-600 hover:bg-gray-50 hover:text-gray-900"><Clock3 className="h-4 w-4" /> Schedules</Link>
+            </div>
+          )}
+        </div>
         </section>
       </div>
 
       <section className="grid gap-4 sm:grid-cols-3">
-        <Link to="/attendance" className="group rounded-xl border border-gray-200 bg-white p-5 shadow-[var(--shadow-elevation)] transition hover:-translate-y-0.5 hover:border-brand-200">
-          <CalendarCheck className="h-5 w-5 text-green-600" />
-          <h2 className="mt-4 font-semibold text-gray-900">Attendance</h2>
-          <p className="mt-1 text-sm text-gray-500">Review today&apos;s workday records and missing check-outs.</p>
-          <span className="mt-4 inline-flex items-center gap-1 text-sm font-medium text-brand-700">Open module <ArrowRight className="h-4 w-4 transition group-hover:translate-x-0.5" /></span>
+        <Link to="/attendance" className="bezel group">
+          <div className="bezel-core p-5 transition group-hover:-translate-y-0.5">
+            <CalendarCheck className="h-5 w-5 text-green-600" />
+            <h2 className="mt-4 font-semibold text-gray-900 font-display">Attendance</h2>
+            <p className="mt-1 text-sm text-gray-500">Review today&apos;s workday records and missing check-outs.</p>
+            <span className="mt-4 inline-flex items-center gap-1 text-sm font-medium text-brand-700">Open module <ArrowRight className="h-4 w-4 transition group-hover:translate-x-0.5" /></span>
+          </div>
         </Link>
-        <Link to="/contracts" className="group rounded-xl border border-gray-200 bg-white p-5 shadow-[var(--shadow-elevation)] transition hover:-translate-y-0.5 hover:border-brand-200">
-          <BriefcaseBusiness className="h-5 w-5 text-orange-600" />
-          <h2 className="mt-4 font-semibold text-gray-900">Contracts</h2>
-          <p className="mt-1 text-sm text-gray-500">Track employment terms, wages, and contract validity.</p>
-          <span className="mt-4 inline-flex items-center gap-1 text-sm font-medium text-brand-700">Open module <ArrowRight className="h-4 w-4 transition group-hover:translate-x-0.5" /></span>
+        <Link to="/contracts" className="bezel group">
+          <div className="bezel-core p-5 transition group-hover:-translate-y-0.5">
+            <BriefcaseBusiness className="h-5 w-5 text-orange-600" />
+            <h2 className="mt-4 font-semibold text-gray-900 font-display">Contracts</h2>
+            <p className="mt-1 text-sm text-gray-500">Track employment terms, wages, and contract validity.</p>
+            <span className="mt-4 inline-flex items-center gap-1 text-sm font-medium text-brand-700">Open module <ArrowRight className="h-4 w-4 transition group-hover:translate-x-0.5" /></span>
+          </div>
         </Link>
-        <Link to="/payroll/payruns" className="group rounded-xl border border-gray-200 bg-white p-5 shadow-[var(--shadow-elevation)] transition hover:-translate-y-0.5 hover:border-brand-200">
-          <FileText className="h-5 w-5 text-brand-600" />
-          <h2 className="mt-4 font-semibold text-gray-900">Payroll</h2>
-          <p className="mt-1 text-sm text-gray-500">Move from workforce overview into payrun processing.</p>
-          <span className="mt-4 inline-flex items-center gap-1 text-sm font-medium text-brand-700">Open module <ArrowRight className="h-4 w-4 transition group-hover:translate-x-0.5" /></span>
+        <Link to={canReview ? '/payroll/payruns' : '/payroll/payslips'} className="bezel group">
+          <div className="bezel-core p-5 transition group-hover:-translate-y-0.5">
+            <FileText className="h-5 w-5 text-brand-600" />
+            <h2 className="mt-4 font-semibold text-gray-900 font-display">Payroll</h2>
+            <p className="mt-1 text-sm text-gray-500">{canReview ? 'Move from workforce overview into payrun processing.' : 'View your payslips and pay history.'}</p>
+            <span className="mt-4 inline-flex items-center gap-1 text-sm font-medium text-brand-700">Open module <ArrowRight className="h-4 w-4 transition group-hover:translate-x-0.5" /></span>
+          </div>
         </Link>
       </section>
     </div>

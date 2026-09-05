@@ -16,9 +16,9 @@ export function Drawer({ isOpen, onClose, title, children, footer }: DrawerProps
     <div className="fixed inset-0 z-50">
       <div className="fixed inset-0 bg-gray-900/30 transition-opacity" onClick={onClose} />
       <div className="fixed inset-y-0 right-0 flex max-w-full">
-        <div className="w-screen max-w-md bg-white shadow-[var(--shadow-popover)] flex flex-col h-full animate-[drawer-in_0.18s_ease-out]">
+        <div className="w-screen max-w-md bg-white rounded-l-2xl shadow-[var(--shadow-popover)] flex flex-col h-full animate-[drawer-in_0.18s_ease-out]">
           <div className="flex items-center justify-between border-b border-gray-100 px-6 py-4 shrink-0">
-            <h3 className="text-base font-semibold text-gray-900">{title}</h3>
+            <h3 className="text-base font-semibold text-gray-900 font-display">{title}</h3>
             <button onClick={onClose} className="text-gray-400 hover:text-gray-600 rounded-md p-1 hover:bg-gray-100 transition-colors">
               <X className="w-4 h-4" />
             </button>

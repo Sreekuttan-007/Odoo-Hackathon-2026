@@ -18,7 +18,7 @@ export function SkeletonTable({ rows = 6, cols = 5 }: { rows?: number; cols?: nu
 
 export function SkeletonDetail() {
   return (
-    <div className="rounded-xl border border-gray-200 bg-white p-6 space-y-6">
+    <div className="rounded-[1.375rem] ring-1 ring-black/[0.04] bg-white p-6 space-y-6">
       <div className="flex items-center gap-4">
         <Skeleton className="h-14 w-14 rounded-full" />
         <div className="space-y-2">

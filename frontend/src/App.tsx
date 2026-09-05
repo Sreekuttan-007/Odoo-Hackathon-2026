@@ -45,21 +45,27 @@ function App() {
             <Route path="employees/:employeeId" element={<EmployeeDetail />} />
             <Route path="contracts" element={<Contracts />} />
             <Route path="contracts/:contractId" element={<ContractDetail />} />
-            <Route path="departments" element={<Departments />} />
-            <Route path="working-schedules" element={<WorkingSchedules />} />
-            <Route path="working-schedules/new" element={<WorkingScheduleForm />} />
-            <Route path="working-schedules/:scheduleId" element={<WorkingScheduleForm />} />
-            
+
+            <Route element={<ProtectedRoute allowedRoles={['HR_MANAGER', 'HR_PAYROLL_USER', 'HR_PAYROLL_MANAGER', 'ADMIN']} />}>
+              <Route path="departments" element={<Departments />} />
+              <Route path="working-schedules" element={<WorkingSchedules />} />
+              <Route path="working-schedules/new" element={<WorkingScheduleForm />} />
+              <Route path="working-schedules/:scheduleId" element={<WorkingScheduleForm />} />
+            </Route>
+
             <Route path="attendance" element={<AttendancePage />} />
             <Route path="attendance/:attendanceId" element={<AttendanceDetail />} />
-            
+
             <Route path="time-off">
               <Route path="requests" element={<TimeOffRequests />} />
               <Route path="requests/:requestId" element={<TimeOffRequestDetail />} />
-              <Route path="allocations" element={<Allocations />} />
-              <Route path="allocations/:allocationId" element={<AllocationDetail />} />
-              <Route path="types" element={<TimeOffTypes />} />
-              <Route path="types/:typeId" element={<TimeOffTypeDetail />} />
+
+              <Route element={<ProtectedRoute allowedRoles={['HR_MANAGER', 'HR_PAYROLL_USER', 'HR_PAYROLL_MANAGER', 'ADMIN']} />}>
+                <Route path="allocations" element={<Allocations />} />
+                <Route path="allocations/:allocationId" element={<AllocationDetail />} />
+                <Route path="types" element={<TimeOffTypes />} />
+                <Route path="types/:typeId" element={<TimeOffTypeDetail />} />
+              </Route>
             </Route>
             
             <Route path="payroll">

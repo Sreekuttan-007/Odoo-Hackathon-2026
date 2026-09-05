@@ -2,8 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import api from '../services/api';
-import { Eye, EyeOff, Loader2 } from 'lucide-react';
-import { Button } from '../components/ui/Button';
+import { ArrowRight, Eye, EyeOff, Loader2 } from 'lucide-react';
 
 export function Login() {
   const [email, setEmail] = useState('');
@@ -43,15 +42,31 @@ export function Login() {
   return (
     <div className="min-h-screen flex bg-white">
       {/* Brand panel */}
-      <div className="hidden lg:flex lg:w-1/2 bg-gray-900 flex-col justify-between p-12">
-        <div className="flex items-center gap-2.5">
-          <div className="h-7 w-7 rounded-md bg-brand-500 flex items-center justify-center">
-            <span className="text-white text-sm font-bold">P</span>
+      <div
+        className="hidden lg:flex lg:w-1/2 flex-col justify-between p-12 relative overflow-hidden"
+        style={{
+          background:
+            'radial-gradient(120% 100% at 0% 100%, rgb(20 122 92 / 0.35), transparent 55%), radial-gradient(80% 60% at 100% 0%, rgb(20 122 92 / 0.18), transparent 60%), #0d1210',
+        }}
+      >
+        <div
+          className="absolute inset-0 opacity-[0.07]"
+          style={{
+            backgroundImage:
+              'linear-gradient(rgb(255 255 255) 1px, transparent 1px), linear-gradient(90deg, rgb(255 255 255) 1px, transparent 1px)',
+            backgroundSize: '40px 40px',
+          }}
+        />
+
+        <div className="relative flex items-center gap-2.5">
+          <div className="h-7 w-7 rounded-lg bg-brand-500 flex items-center justify-center shadow-[0_2px_10px_-1px_rgb(20,122,92,0.6)]">
+            <span className="text-white text-sm font-bold font-display">P</span>
           </div>
-          <span className="text-white text-lg font-semibold tracking-tight">Payloom</span>
+          <span className="text-white text-lg font-bold tracking-tight font-display">Payloom</span>
         </div>
-        <div>
-          <p className="text-2xl font-medium text-white leading-snug max-w-sm">
+        <div className="relative">
+          <span className="eyebrow bg-white/10 text-brand-200 mb-4">People · Time · Payroll</span>
+          <p className="text-3xl font-bold text-white leading-[1.15] max-w-sm font-display">
             HR &amp; Payroll, woven together.
           </p>
           <p className="text-sm text-gray-400 mt-4 max-w-sm">
@@ -59,20 +74,20 @@ export function Login() {
             of truth for your workforce.
           </p>
         </div>
-        <p className="text-xs text-gray-500">© 2026 Payloom</p>
+        <p className="relative text-xs text-gray-500">© 2026 Payloom</p>
       </div>
 
       {/* Form panel */}
       <div className="flex flex-1 items-center justify-center px-6 py-12">
         <div className="w-full max-w-sm">
           <div className="lg:hidden flex items-center gap-2.5 mb-10">
-            <div className="h-7 w-7 rounded-md bg-brand-600 flex items-center justify-center">
-              <span className="text-white text-sm font-bold">P</span>
+            <div className="h-7 w-7 rounded-lg bg-brand-600 flex items-center justify-center">
+              <span className="text-white text-sm font-bold font-display">P</span>
             </div>
-            <span className="text-gray-900 text-lg font-semibold tracking-tight">Payloom</span>
+            <span className="text-gray-900 text-lg font-bold tracking-tight font-display">Payloom</span>
           </div>
 
-          <h1 className="text-xl font-semibold text-gray-900">Welcome back</h1>
+          <h1 className="text-2xl font-bold text-gray-900 font-display">Welcome back</h1>
           <p className="text-sm text-gray-500 mt-1 mb-8">Sign in to your workspace.</p>
 
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -94,7 +109,7 @@ export function Login() {
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="block w-full h-9 px-3 rounded-md border border-gray-300 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-brand-500 focus:border-brand-500"
+                className="block w-full h-10 px-3.5 rounded-lg border border-gray-300 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-500"
                 placeholder="you@company.com"
                 disabled={loading}
               />
@@ -115,7 +130,7 @@ export function Login() {
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="block w-full h-9 px-3 pr-9 rounded-md border border-gray-300 text-sm text-gray-900 focus:outline-none focus:ring-1 focus:ring-brand-500 focus:border-brand-500"
+                  className="block w-full h-10 px-3.5 pr-10 rounded-lg border border-gray-300 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-500"
                   disabled={loading}
                 />
                 <button
@@ -130,9 +145,12 @@ export function Login() {
               </div>
             </div>
 
-            <Button type="submit" variant="primary" className="w-full mt-2" disabled={loading}>
-              {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Sign in'}
-            </Button>
+            <button type="submit" disabled={loading} className="btn-pill-cta w-full justify-between mt-2">
+              Sign in
+              <span className="btn-pill-cta-icon">
+                {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <ArrowRight className="w-4 h-4" />}
+              </span>
+            </button>
 
             <p className="text-center text-xs text-gray-400 pt-2">
               Accounts are created by an administrator.

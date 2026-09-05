@@ -8,8 +8,8 @@ interface SectionCardProps {
 
 export function SectionCard({ children, className = '', padded = true }: SectionCardProps) {
   return (
-    <div className={`rounded-xl border border-gray-200 bg-white shadow-[var(--shadow-elevation)] ${padded ? 'p-6' : ''} ${className}`}>
-      {children}
+    <div className={`bezel ${className}`}>
+      <div className={`bezel-core ${padded ? 'p-6' : ''}`}>{children}</div>
     </div>
   );
 }

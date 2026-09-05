@@ -12,7 +12,7 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 }
 
 const VARIANT_CLASSES: Record<Variant, string> = {
-  primary: 'bg-brand-600 text-white border border-transparent hover:bg-brand-700 disabled:hover:bg-brand-600 shadow-sm',
+  primary: 'bg-brand-600 text-white font-semibold border border-transparent hover:bg-brand-700 disabled:hover:bg-brand-600 shadow-[0_1px_2px_rgb(9,50,38,0.12),0_2px_6px_-1px_rgb(20,122,92,0.25)]',
   secondary: 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50 disabled:hover:bg-white shadow-sm',
   ghost: 'bg-transparent text-gray-600 border border-transparent hover:bg-gray-100 disabled:hover:bg-transparent',
   destructive: 'bg-white text-red-600 border border-red-200 hover:bg-red-50 disabled:hover:bg-white',
@@ -31,7 +31,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button
     <button
       ref={ref}
       disabled={disabled || loading}
-      className={`inline-flex items-center justify-center rounded-md font-medium transition-colors duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-1 disabled:opacity-50 disabled:cursor-not-allowed ${VARIANT_CLASSES[variant]} ${SIZE_CLASSES[size]} ${className}`}
+      className={`inline-flex items-center justify-center rounded-lg font-medium transition-all duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-1 disabled:opacity-50 disabled:cursor-not-allowed ${VARIANT_CLASSES[variant]} ${SIZE_CLASSES[size]} ${className}`}
       {...rest}
     >
       {loading && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
