@@ -432,6 +432,24 @@ Odoo-Hackathon-2026/
 
 ---
 
+## Database Options
+
+Payloom's backend is plain SQLAlchemy + Alembic + PostgreSQL — the
+database can be either of these, switched purely via `DATABASE_URL` in
+`.env`; no code differs between them:
+
+1. **Local PostgreSQL via Docker** (default, see Quick Start below) —
+   for day-to-day development.
+2. **Neon** (managed cloud PostgreSQL) — for a persistent demo/deployment
+   environment that doesn't depend on your machine being up. See
+   [`docs/NEON_DEPLOYMENT.md`](docs/NEON_DEPLOYMENT.md) for the full setup,
+   migration, and seeding steps.
+
+Both use the same Alembic migration chain as the schema source of truth
+— `alembic upgrade head` against whichever `DATABASE_URL` is active.
+
+---
+
 ## Quick Start
 
 ### Prerequisites
@@ -497,6 +515,7 @@ Then:
 ```bash
 pip install -r requirements.txt
 alembic upgrade head
+python seed.py   # idempotent demo data — safe to re-run
 uvicorn app.main:app --reload
 ```
 
@@ -701,6 +720,7 @@ Technical documentation is available in:
 - `docs/ROUTES.md`
 - `docs/BUILD_STATUS.md`
 - `docs/PHASE_LOG.md`
+- `docs/NEON_DEPLOYMENT.md`
 
 ---
 

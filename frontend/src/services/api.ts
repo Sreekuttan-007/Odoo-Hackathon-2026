@@ -1,7 +1,9 @@
 import axios from 'axios';
 
+// VITE_API_BASE_URL lets a deployed frontend point at a deployed backend;
+// falls back to the local dev backend when unset (see .env.example).
 const api = axios.create({
-  baseURL: 'http://localhost:8000/api',
+  baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api',
 });
 
 api.interceptors.request.use((config) => {
