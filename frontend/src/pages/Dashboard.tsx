@@ -16,6 +16,8 @@ import {
 } from 'lucide-react';
 
 const HR_ROLES = ['HR_MANAGER', 'HR_PAYROLL_USER', 'HR_PAYROLL_MANAGER', 'ADMIN'];
+// Matches the route guard on /payroll/payruns in App.tsx
+const PAYROLL_OPERATOR_ROLES = ['HR_PAYROLL_USER', 'HR_PAYROLL_MANAGER', 'ADMIN'];
 
 function formatDate(value: string) {
   return new Intl.DateTimeFormat('en-IN', {
@@ -112,6 +114,7 @@ export function Dashboard() {
   const checkedIn = attendance.filter(record => record.status === 'ACTIVE').length;
   const missingCheckout = attendance.filter(record => record.status === 'MISSING_CHECKOUT').length;
   const canReview = !!user && HR_ROLES.includes(user.role);
+  const canRunPayroll = !!user && PAYROLL_OPERATOR_ROLES.includes(user.role);
 
   const departmentCounts = useMemo(() => {
     return departments
@@ -281,11 +284,11 @@ export function Dashboard() {
             <span className="mt-4 inline-flex items-center gap-1 text-sm font-medium text-brand-700">Open module <ArrowRight className="h-4 w-4 transition group-hover:translate-x-0.5" /></span>
           </div>
         </Link>
-        <Link to={canReview ? '/payroll/payruns' : '/payroll/payslips'} className="bezel group">
+        <Link to={canRunPayroll ? '/payroll/payruns' : '/payroll/payslips'} className="bezel group">
           <div className="bezel-core p-5 transition group-hover:-translate-y-0.5">
             <FileText className="h-5 w-5 text-brand-600" />
             <h2 className="mt-4 font-semibold text-gray-900 font-display">Payroll</h2>
-            <p className="mt-1 text-sm text-gray-500">{canReview ? 'Move from workforce overview into payrun processing.' : 'View your payslips and pay history.'}</p>
+            <p className="mt-1 text-sm text-gray-500">{canRunPayroll ? 'Move from workforce overview into payrun processing.' : 'View your payslips and pay history.'}</p>
             <span className="mt-4 inline-flex items-center gap-1 text-sm font-medium text-brand-700">Open module <ArrowRight className="h-4 w-4 transition group-hover:translate-x-0.5" /></span>
           </div>
         </Link>
