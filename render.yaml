@@ -19,6 +19,10 @@ services:
     runtime: python
     rootDir: backend
     plan: free
+    # Keep the backend in the SAME region as the Neon database
+    # (ap-southeast-1 / Singapore) — a cross-region DB round-trip is ~170ms
+    # and dominates every request. Same-region is <5ms.
+    region: singapore
     buildCommand: pip install -r requirements.txt
     # seed.py is idempotent (look-up-then-create by business key) — safe to
     # run on every boot; it just no-ops once the demo data exists.
