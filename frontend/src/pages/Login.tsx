@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import api from '../services/api';
 import { ArrowRight, Eye, EyeOff, Loader2 } from 'lucide-react';
+import { InteractiveGrid } from '../components/InteractiveGrid';
 
 export function Login() {
   const [email, setEmail] = useState('');
@@ -42,21 +43,9 @@ export function Login() {
   return (
     <div className="min-h-screen flex bg-white">
       {/* Brand panel */}
-      <div
-        className="hidden lg:flex lg:w-1/2 flex-col justify-between p-12 relative overflow-hidden"
-        style={{
-          background:
-            'radial-gradient(120% 100% at 0% 100%, rgb(20 122 92 / 0.35), transparent 55%), radial-gradient(80% 60% at 100% 0%, rgb(20 122 92 / 0.18), transparent 60%), #0d1210',
-        }}
-      >
-        <div
-          className="absolute inset-0 opacity-[0.07]"
-          style={{
-            backgroundImage:
-              'linear-gradient(rgb(255 255 255) 1px, transparent 1px), linear-gradient(90deg, rgb(255 255 255) 1px, transparent 1px)',
-            backgroundSize: '40px 40px',
-          }}
-        />
+      <div className="auth-stage hidden lg:flex lg:w-1/2 flex-col justify-between p-12">
+        <InteractiveGrid />
+        <div className="auth-vignette" aria-hidden="true" />
 
         <div className="relative flex items-center gap-2.5">
           <div className="h-7 w-7 rounded-lg bg-brand-500 flex items-center justify-center shadow-[0_2px_10px_-1px_rgb(20,122,92,0.6)]">
