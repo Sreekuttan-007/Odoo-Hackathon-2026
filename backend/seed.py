@@ -64,6 +64,8 @@ def seed_db():
     pos_hr_manager, _ = _get_or_create(db, JobPosition, title="HR Manager", defaults={"level": 3})
     pos_engineer, _ = _get_or_create(db, JobPosition, title="Software Engineer", defaults={"level": 4})
     pos_sales_exec, _ = _get_or_create(db, JobPosition, title="Sales Executive", defaults={"level": 4})
+    pos_finance_exec, _ = _get_or_create(db, JobPosition, title="Finance Executive", defaults={"level": 4})
+    pos_hr_exec, _ = _get_or_create(db, JobPosition, title="HR Executive", defaults={"level": 4})
     # Levels are static hierarchy metadata, not user-editable business data —
     # keep them authoritative even if the row already existed (e.g. created
     # before this field existed, or before the seed set it).
@@ -72,6 +74,8 @@ def seed_db():
     pos_hr_manager.level = 3
     pos_engineer.level = 4
     pos_sales_exec.level = 4
+    pos_finance_exec.level = 4
+    pos_hr_exec.level = 4
     db.commit()
 
     # --- Working Schedules ---
@@ -132,6 +136,40 @@ def seed_db():
         "job_position_id": pos_engineer.id, "working_schedule_id": schedule_40h.id,
         "manager_id": emp_staff.id, "status": EmployeeStatus.ACTIVE,
     })
+
+    # Five more employees spread across departments/managers so list views,
+    # the Payrun employee-selection step, and org-hierarchy screens have a
+    # realistic headcount to demo instead of a 6-row table.
+    emp_priya, _ = _get_or_create(db, Employee, employee_code="EMP0012", defaults={
+        "first_name": "Priya", "last_name": "Sharma", "work_email": "priya.sharma@payloom.local",
+        "work_location": "Bengaluru HQ", "department_id": dept_engineering.id,
+        "job_position_id": pos_engineer.id, "working_schedule_id": schedule_40h.id,
+        "manager_id": emp_staff.id, "status": EmployeeStatus.ACTIVE,
+    })
+    emp_karan, _ = _get_or_create(db, Employee, employee_code="EMP0008", defaults={
+        "first_name": "Karan", "last_name": "Nair", "work_email": "karan.nair@payloom.local",
+        "work_location": "Bengaluru HQ", "department_id": dept_engineering.id,
+        "job_position_id": pos_engineer.id, "working_schedule_id": schedule_40h.id,
+        "manager_id": emp_staff.id, "status": EmployeeStatus.ACTIVE,
+    })
+    emp_rohan, _ = _get_or_create(db, Employee, employee_code="EMP0009", defaults={
+        "first_name": "Rohan", "last_name": "Verma", "work_email": "rohan.verma@payloom.local",
+        "work_location": "Mumbai Office", "department_id": dept_sales.id,
+        "job_position_id": pos_sales_exec.id, "working_schedule_id": schedule_48h.id,
+        "manager_id": emp_admin.id, "status": EmployeeStatus.ACTIVE,
+    })
+    emp_sneha, _ = _get_or_create(db, Employee, employee_code="EMP0010", defaults={
+        "first_name": "Sneha", "last_name": "Iyer", "work_email": "sneha.iyer@payloom.local",
+        "work_location": "Bengaluru HQ", "department_id": dept_finance.id,
+        "job_position_id": pos_finance_exec.id, "working_schedule_id": schedule_40h.id,
+        "manager_id": emp_payroll.id, "status": EmployeeStatus.ACTIVE,
+    })
+    emp_meera, _ = _get_or_create(db, Employee, employee_code="EMP0011", defaults={
+        "first_name": "Meera", "last_name": "Pillai", "work_email": "meera.pillai@payloom.local",
+        "work_location": "Bengaluru HQ", "department_id": dept_hr.id,
+        "job_position_id": pos_hr_exec.id, "working_schedule_id": schedule_40h.id,
+        "manager_id": emp_hr.id, "status": EmployeeStatus.ACTIVE,
+    })
     db.commit()
 
     # --- Contracts ---
@@ -159,6 +197,22 @@ def seed_db():
         "end_date": None, "wage_monthly": 50000, "currency": "INR",
     })
     dave_contract.wage_monthly = 50000
+
+    # The 5 additional employees: one clean running contract each, so they
+    # show up as eligible candidates in the Payrun employee-selection step
+    # alongside Aarav and Dave.
+    for emp, dept, pos, wage in [
+        (emp_priya, dept_engineering, pos_engineer, 60000),
+        (emp_karan, dept_engineering, pos_engineer, 55000),
+        (emp_rohan, dept_sales, pos_sales_exec, 45000),
+        (emp_sneha, dept_finance, pos_finance_exec, 50000),
+        (emp_meera, dept_hr, pos_hr_exec, 48000),
+    ]:
+        _get_or_create(db, Contract, employee_id=emp.id, start_date=date(2026, 1, 1), defaults={
+            "reference": contract_rules.generate_reference(db, date(2026, 1, 1)),
+            "department_id": dept.id, "job_position_id": pos.id, "working_schedule_id": schedule_40h.id,
+            "end_date": None, "wage_monthly": wage, "currency": "INR",
+        })
     db.commit()
 
     # --- Users ---
