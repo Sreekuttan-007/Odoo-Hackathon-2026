@@ -5,9 +5,9 @@
 #   2. Render dashboard → New → Blueprint → connect this GitHub repo.
 #   3. Render reads this file and creates both services below.
 #   4. Fill the 3 values marked `sync: false` when prompted:
-#        - payloom-api  : DATABASE_URL   (your Neon postgresql+psycopg://…?sslmode=require string)
-#        - payloom-api  : GEMINI_API_KEY (optional — leave blank to run without the AI brief)
-#        - payloom-web  : VITE_API_BASE_URL  ->  https://payloom-api.onrender.com/api
+#        - payloom-api-sg : DATABASE_URL   (your Neon postgresql+psycopg://…?sslmode=require string)
+#        - payloom-api-sg : GEMINI_API_KEY (optional — leave blank to run without the AI brief)
+#        - payloom-web  : VITE_API_BASE_URL  ->  https://payloom-api-sg.onrender.com/api
 #          (use the real backend URL Render shows you; keep the /api suffix)
 #   5. After the first deploy, open payloom-api → Shell:  cd backend && python seed.py
 #   6. If CORS blocks login, set payloom-api → CORS_ORIGINS to the exact payloom-web URL.
@@ -15,7 +15,7 @@
 services:
   # ---------------------------------------------------------------- backend
   - type: web
-    name: payloom-api
+    name: payloom-api-sg          # unique-ish -> predictable https://payloom-api-sg.onrender.com
     runtime: python
     rootDir: backend
     plan: free
@@ -54,7 +54,7 @@ services:
     pullRequestPreviewsEnabled: false
     envVars:
       - key: VITE_API_BASE_URL
-        sync: false                  # https://payloom-api.onrender.com/api
+        sync: false                  # https://payloom-api-sg.onrender.com/api
     routes:
       - type: rewrite
         source: /*
