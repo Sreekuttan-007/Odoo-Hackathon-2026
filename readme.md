@@ -655,32 +655,23 @@ npm run lint
 
 ## Project Screenshots
 
-Add final screenshots to:
-
-```text
-docs/screenshots/
-```
-
-Recommended gallery:
-
-```html
 <table>
   <tr>
-    <td><img src="./docs/screenshots/dashboard.png" width="600" alt="Payloom Dashboard"></td>
-    <td><img src="./docs/screenshots/employees.png" width="600" alt="Employees"></td>
+    <td><img src="./docs/screenshots/01-dashboard.png" width="600" alt="Dashboard — real DB-backed KPIs and attention items"><br><sub>Dashboard</sub></td>
+    <td><img src="./docs/screenshots/02-employee-detail.png" width="600" alt="Employee detail — profile, department, contract and schedule"><br><sub>Employee Detail</sub></td>
   </tr>
   <tr>
-    <td><img src="./docs/screenshots/attendance.png" width="600" alt="Attendance"></td>
-    <td><img src="./docs/screenshots/time-off.png" width="600" alt="Time Off"></td>
+    <td><img src="./docs/screenshots/03-salary-structure.png" width="600" alt="Salary Structure — ordered Salary Rules"><br><sub>Salary Structure</sub></td>
+    <td><img src="./docs/screenshots/04-payrun-preflight.png" width="600" alt="Payrun detail — Payroll Preflight readiness panel"><br><sub>Payrun · Preflight</sub></td>
   </tr>
   <tr>
-    <td><img src="./docs/screenshots/payrun.png" width="600" alt="Payrun"></td>
-    <td><img src="./docs/screenshots/payslip.png" width="600" alt="Payslip"></td>
+    <td><img src="./docs/screenshots/06-paytrace.png" width="600" alt="PayTrace — rule-by-rule calculation trace from Contract Wage to Net Pay"><br><sub>PayTrace</sub></td>
+    <td><img src="./docs/screenshots/05-simulator-empty.png" width="600" alt="Payroll Simulator — scope and scenario setup"><br><sub>Payroll Simulator</sub></td>
+  </tr>
+  <tr>
+    <td colspan="2"><img src="./docs/screenshots/07-payloom-intelligence.png" width="600" alt="Payloom Intelligence — grounded AI payroll brief"><br><sub>Payloom Intelligence</sub></td>
   </tr>
 </table>
-```
-
-Do not add screenshot paths until those files actually exist.
 
 ---
 
