@@ -4,6 +4,7 @@ import { AttendanceWidget } from './AttendanceWidget';
 import { LogOut, LayoutDashboard, Users, FileText, Building2, Clock, CalendarCheck, PlaneTakeoff, Wallet, ShieldCheck, FlaskConical } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import type { Role } from '../types';
+import logoDark from '../assets/logo-dark.png';
 
 interface NavItem {
   to: string;
@@ -77,11 +78,8 @@ export function AppShell() {
     <div className="flex h-screen bg-gray-50">
       {/* Sidebar */}
       <aside className="w-60 flex-shrink-0 bg-white border-r border-gray-200 flex flex-col">
-        <div className="flex h-14 shrink-0 items-center gap-2.5 px-5 border-b border-gray-100">
-          <div className="brand-mark h-7 w-7 rounded-lg bg-brand-600 flex items-center justify-center shadow-[0_2px_6px_-1px_rgb(20,122,92,0.4)]">
-            <span className="text-white text-xs font-bold font-display">P</span>
-          </div>
-          <span className="text-[16px] font-bold text-gray-900 tracking-tight font-display">Payloom</span>
+        <div className="flex h-14 shrink-0 items-center px-5 border-b border-gray-100">
+          <img src={logoDark} alt="Payloom" className="h-6 w-auto" />
         </div>
 
         <nav className="flex flex-1 flex-col overflow-y-auto px-3 py-4 space-y-5">
