@@ -73,7 +73,7 @@ export function Login() {
       {/* Form panel — the light half. Transparent on desktop so the
           cursor-revealed grid shows through against the shell's light
           background; solid white on mobile where there is no left panel. */}
-      <div className="relative z-10 flex flex-1 items-center justify-center px-6 py-12 max-lg:bg-white lg:border-l lg:border-black/5">
+      <div className="auth-form-side relative z-10 flex flex-1 items-center justify-center px-6 py-12 max-lg:bg-white lg:border-l lg:border-black/5">
         <div className="w-full max-w-sm">
           <div className="lg:hidden flex items-center gap-2.5 mb-10">
             <div className="h-7 w-7 rounded-lg bg-brand-600 flex items-center justify-center">

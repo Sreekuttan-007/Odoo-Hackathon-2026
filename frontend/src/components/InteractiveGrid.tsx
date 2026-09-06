@@ -65,9 +65,9 @@ const CONFIG = {
   /** speed of the ambient drift (radians / ms) */
   driftSpeed: 0.00016,
   /** emerald / turquoise line colour (rgb triplet) */
-  lineColor: '20, 201, 166',
+  lineColor: '52, 214, 181',
   /** glow + hot-node colour (rgb triplet) */
-  glowColor: '45, 227, 188',
+  glowColor: '96, 236, 208',
 } as const;
 
 interface Node {
