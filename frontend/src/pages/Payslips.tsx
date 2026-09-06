@@ -69,20 +69,23 @@ export function Payslips() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-50">
-                {payslips.map(p => (
+                {payslips.map(p => {
+                  const computed = p.status !== 'DRAFT';
+                  return (
                   <tr key={p.id} onClick={() => navigate(`/payroll/payslips/${p.id}`)} className="hover:bg-gray-50 cursor-pointer transition-colors">
                     {!isEmployee && <td className="px-6 py-3 whitespace-nowrap text-sm font-medium text-gray-900">{p.employee.first_name} {p.employee.last_name}</td>}
                     <td className="px-6 py-3 whitespace-nowrap text-sm">
                       {p.warning_count > 0 ? <span className="inline-flex items-center gap-1 text-warning-700"><AlertTriangle className="w-3.5 h-3.5" /> {p.warning_count}</span> : <span className="text-gray-400">—</span>}
                     </td>
                     <td className="px-6 py-3 whitespace-nowrap text-sm text-gray-600">{formatDate(p.period_start)} – {formatDate(p.period_end)}</td>
-                    <td className="px-6 py-3 whitespace-nowrap text-sm text-gray-600">{formatMoney(p.basic)}</td>
-                    <td className="px-6 py-3 whitespace-nowrap text-sm text-gray-600">{formatMoney(p.gross)}</td>
-                    <td className="px-6 py-3 whitespace-nowrap text-sm font-medium text-gray-900">{formatMoney(p.net)}</td>
+                    <td className="px-6 py-3 whitespace-nowrap text-sm text-gray-600">{computed ? formatMoney(p.basic) : <span className="text-gray-400">—</span>}</td>
+                    <td className="px-6 py-3 whitespace-nowrap text-sm text-gray-600">{computed ? formatMoney(p.gross) : <span className="text-gray-400">—</span>}</td>
+                    <td className="px-6 py-3 whitespace-nowrap text-sm font-medium text-gray-900">{computed ? formatMoney(p.net) : <span className="text-gray-400">—</span>}</td>
                     <td className="px-6 py-3 whitespace-nowrap text-sm text-gray-600">{p.salary_structure.name}</td>
                     <td className="px-6 py-3 whitespace-nowrap"><StatusBadge status={p.status} /></td>
                   </tr>
-                ))}
+                  );
+                })}
               </tbody>
             </table>
           </div>
