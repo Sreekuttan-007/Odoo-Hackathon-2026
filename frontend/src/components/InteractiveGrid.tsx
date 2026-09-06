@@ -23,17 +23,17 @@ import { useEffect, useRef } from 'react';
 
 const CONFIG = {
   /** px between grid nodes on a normal viewport */
-  spacing: 46,
+  spacing: 30,
   /** px between grid nodes on small viewports / high-DPR devices */
-  spacingCoarse: 64,
+  spacingCoarse: 42,
   /** viewport width at or below which the coarse spacing is used */
   coarseBelow: 1280,
   /** hard cap on the canvas backing-store scale */
   maxDpr: 1.5,
   /** px radius of the cursor's circular area of influence */
-  influenceRadius: 160,
+  influenceRadius: 110,
   /** max px a node is pushed away from the cursor */
-  pushForce: 22,
+  pushForce: 18,
   /** spring pull of each node back toward its home position */
   stiffness: 0.085,
   /** per-frame velocity damping (lower = settles faster) */
@@ -49,7 +49,7 @@ const CONFIG = {
   /** heat above which a segment / node is drawn "hot" */
   hotThreshold: 0.05,
   /** px radius of the radial glow under the cursor */
-  glowRadius: 200,
+  glowRadius: 140,
   /** peak alpha of the cursor glow */
   glowStrength: 0.16,
   /** px of slow ambient breathing */
