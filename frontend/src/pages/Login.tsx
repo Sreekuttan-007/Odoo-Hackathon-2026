@@ -4,8 +4,6 @@ import { useAuth } from '../contexts/AuthContext';
 import api from '../services/api';
 import { ArrowRight, Eye, EyeOff, Loader2 } from 'lucide-react';
 import { InteractiveGrid } from '../components/InteractiveGrid';
-import logoLight from '../assets/logo-light.png';
-import logoDark from '../assets/logo-dark.png';
 
 export function Login() {
   const [email, setEmail] = useState('');
@@ -53,8 +51,11 @@ export function Login() {
       <div className="auth-stage relative z-10 hidden lg:flex lg:w-1/2 flex-col justify-between p-12">
         <div className="auth-vignette" aria-hidden="true" />
 
-        <div className="relative">
-          <img src={logoLight} alt="Payloom" className="h-9 w-auto" />
+        <div className="relative flex items-center gap-2.5">
+          <div className="h-7 w-7 rounded-lg bg-brand-500 flex items-center justify-center shadow-[0_2px_10px_-1px_rgb(20,122,92,0.6)]">
+            <span className="text-white text-sm font-bold font-display">P</span>
+          </div>
+          <span className="text-white text-lg font-bold tracking-tight font-display">Payloom</span>
         </div>
         <div className="relative">
           <span className="eyebrow bg-white/10 text-brand-200 mb-4">People · Time · Payroll</span>
@@ -74,8 +75,11 @@ export function Login() {
           background; solid white on mobile where there is no left panel. */}
       <div className="auth-form-side relative z-10 flex flex-1 items-center justify-center px-6 py-12 max-lg:bg-white lg:border-l lg:border-black/5">
         <div className="w-full max-w-sm">
-          <div className="lg:hidden mb-10">
-            <img src={logoDark} alt="Payloom" className="h-8 w-auto" />
+          <div className="lg:hidden flex items-center gap-2.5 mb-10">
+            <div className="h-7 w-7 rounded-lg bg-brand-600 flex items-center justify-center">
+              <span className="text-white text-sm font-bold font-display">P</span>
+            </div>
+            <span className="text-gray-900 text-lg font-bold tracking-tight font-display">Payloom</span>
           </div>
 
           <h1 className="text-2xl font-bold text-gray-900 font-display">Welcome back</h1>
