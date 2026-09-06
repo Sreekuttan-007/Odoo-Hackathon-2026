@@ -1,7 +1,9 @@
 import { useEffect, useRef } from 'react';
 
 /**
- * Cursor-reactive grid for the login brand panel.
+ * Cursor-reactive grid, originally built for the login brand panel and
+ * reusable anywhere via the `overrides`/`className` props (see the
+ * dashboard hero banner for a full-bleed, non-split usage).
  *
  * Renders a DPR-aware <canvas> that sits behind the panel content and
  * never intercepts pointer or keyboard events (`pointer-events: none`).
@@ -21,7 +23,33 @@ import { useEffect, useRef } from 'react';
  *    reports a non-zero box again
  */
 
-const CONFIG = {
+interface GridConfig {
+  spacing: number;
+  spacingCoarse: number;
+  coarseBelow: number;
+  maxDpr: number;
+  influenceRadius: number;
+  pushForce: number;
+  stiffness: number;
+  damping: number;
+  pointerEase: number;
+  strengthEase: number;
+  minWidth: number;
+  dividePosition: number;
+  revealBlend: number;
+  revealRadius: number;
+  lineOpacity: number;
+  lineOpacityHot: number;
+  hotThreshold: number;
+  glowRadius: number;
+  glowStrength: number;
+  driftAmplitude: number;
+  driftSpeed: number;
+  lineColor: string;
+  glowColor: string;
+}
+
+const DEFAULT_CONFIG: GridConfig = {
   /** px between grid nodes on a normal viewport */
   spacing: 30,
   /** px between grid nodes on small viewports / high-DPR devices */
@@ -68,7 +96,7 @@ const CONFIG = {
   lineColor: '52, 214, 181',
   /** glow + hot-node colour (rgb triplet) */
   glowColor: '96, 236, 208',
-} as const;
+};
 
 interface Node {
   /** home position (grid origin, before drift + push) */
@@ -86,10 +114,23 @@ interface Node {
 
 const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
 
-export function InteractiveGrid() {
+interface InteractiveGridProps {
+  /** CSS class controlling position/sizing — defaults to the login shell's full-cover canvas. */
+  className?: string;
+  /**
+   * Per-instance tweaks over DEFAULT_CONFIG. Pass `dividePosition: 1` for a
+   * banner that's uniformly dark end-to-end (no light-panel reveal mask) —
+   * define this object as a module-level constant at the call site so its
+   * identity is stable across renders.
+   */
+  overrides?: Partial<GridConfig>;
+}
+
+export function InteractiveGrid({ className = 'auth-grid-canvas', overrides }: InteractiveGridProps = {}) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
   useEffect(() => {
+    const CONFIG = { ...DEFAULT_CONFIG, ...overrides };
     const canvas = canvasRef.current;
     const panel = canvas?.parentElement;
     if (!canvas || !panel) return;
@@ -416,7 +457,7 @@ export function InteractiveGrid() {
       hoverQuery.removeEventListener('change', onHoverChange);
       desktopQuery.removeEventListener('change', onDesktopChange);
     };
-  }, []);
+  }, [overrides]);
 
-  return <canvas ref={canvasRef} aria-hidden="true" className="auth-grid-canvas" />;
+  return <canvas ref={canvasRef} aria-hidden="true" className={className} />;
 }

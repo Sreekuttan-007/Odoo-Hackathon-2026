@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import api from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 import type { Attendance, Contract, Department, Employee, TimeOffRequest } from '../types';
+import { InteractiveGrid } from '../components/InteractiveGrid';
 import {
   ArrowRight,
   BriefcaseBusiness,
@@ -14,6 +15,11 @@ import {
   PlaneTakeoff,
   Users,
 } from 'lucide-react';
+
+// The banner is uniformly dark end-to-end (no light half to reveal
+// around), so push the grid's visible/dark region to the full width.
+// Module-level so the object identity is stable across Dashboard renders.
+const HERO_GRID_OVERRIDES = { dividePosition: 1 } as const;
 
 const HR_ROLES = ['HR_MANAGER', 'HR_PAYROLL_USER', 'HR_PAYROLL_MANAGER', 'ADMIN'];
 // Matches the route guard on /payroll/payruns in App.tsx
@@ -140,14 +146,7 @@ export function Dashboard() {
           boxShadow: 'var(--shadow-popover)',
         }}
       >
-        <div
-          className="pointer-events-none absolute inset-0 opacity-[0.06]"
-          style={{
-            backgroundImage:
-              'linear-gradient(rgb(255 255 255) 1px, transparent 1px), linear-gradient(90deg, rgb(255 255 255) 1px, transparent 1px)',
-            backgroundSize: '36px 36px',
-          }}
-        />
+        <InteractiveGrid className="hero-grid-canvas" overrides={HERO_GRID_OVERRIDES} />
         <div className="relative flex flex-col justify-between gap-6 lg:flex-row lg:items-end">
           <div>
             <span className="eyebrow bg-white/10 text-brand-200">Payloom workspace</span>
