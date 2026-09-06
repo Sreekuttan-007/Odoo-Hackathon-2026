@@ -226,12 +226,22 @@ tbody tr:hover {
     radial-gradient(80% 60% at 100% 0%, rgb(14 127 122 / 0.28), transparent 60%),
     #0a0e0c;
 }
+/* desktop: dark left half, light right half (the split matches the
+   lg:w-1/2 brand panel). The grid canvas paints over this. */
+@media (min-width: 1024px) {
+  .auth-shell {
+    background:
+      linear-gradient(90deg, rgba(255, 255, 255, 0) 0 50%, #fcfdfd 50%, #ffffff 100%),
+      radial-gradient(115% 90% at 0% 100%, rgb(20 122 92 / 0.45), transparent 55%),
+      radial-gradient(80% 60% at 100% 0%, rgb(14 127 122 / 0.3), transparent 60%),
+      #0a0e0c;
+  }
+}
 
-/* dark brand panel — translucent so the shared grid shows through */
+/* dark brand panel — transparent; the shell + grid show through */
 .auth-stage {
   isolation: isolate;
   overflow: hidden;
-  background: rgb(9 13 11 / 0.4);
 }
 .auth-stage > * {
   position: relative;

@@ -41,9 +41,10 @@ export function Login() {
   };
 
   return (
-    <div className="auth-shell relative min-h-screen flex bg-[#0a0e0c]">
-      {/* One grid spans the whole page so the cursor carries it seamlessly
-          from the dark panel across to the form. */}
+    <div className="auth-shell relative min-h-screen flex">
+      {/* One grid spans the whole page. It's always visible on the dark
+          left panel; on the light right side it only reveals around the
+          cursor, so moving across the divide carries the same behaviour. */}
       <InteractiveGrid />
 
       {/* Brand panel */}
@@ -69,9 +70,10 @@ export function Login() {
         <p className="relative text-xs text-gray-500">© 2026 Payloom</p>
       </div>
 
-      {/* Form panel — light surface that contrasts the dark left while the
-          same grid stays faintly visible through it on desktop. */}
-      <div className="relative z-10 flex flex-1 items-center justify-center px-6 py-12 max-lg:bg-white lg:bg-gradient-to-r lg:from-white/55 lg:via-white/92 lg:to-white lg:border-l lg:border-white/10">
+      {/* Form panel — the light half. Transparent on desktop so the
+          cursor-revealed grid shows through against the shell's light
+          background; solid white on mobile where there is no left panel. */}
+      <div className="relative z-10 flex flex-1 items-center justify-center px-6 py-12 max-lg:bg-white lg:border-l lg:border-black/5">
         <div className="w-full max-w-sm">
           <div className="lg:hidden flex items-center gap-2.5 mb-10">
             <div className="h-7 w-7 rounded-lg bg-brand-600 flex items-center justify-center">

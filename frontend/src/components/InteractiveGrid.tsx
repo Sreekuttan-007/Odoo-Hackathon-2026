@@ -44,10 +44,16 @@ const CONFIG = {
   strengthEase: 0.08,
   /** min viewport width at which the grid runs (below = mobile, dormant) */
   minWidth: 1024,
+  /** fraction of the shell width where the dark panel ends */
+  dividePosition: 0.5,
+  /** px feather applied to the grid's visibility at the divide */
+  revealBlend: 40,
+  /** px radius the cursor reveals the grid over on the light side */
+  revealRadius: 200,
   /** resting alpha of the grid lines */
-  lineOpacity: 0.15,
+  lineOpacity: 0.16,
   /** alpha of the lines / dots closest to the cursor */
-  lineOpacityHot: 0.5,
+  lineOpacityHot: 0.55,
   /** heat above which a segment / node is drawn "hot" */
   hotThreshold: 0.05,
   /** px radius of the radial glow under the cursor */
@@ -90,6 +96,11 @@ export function InteractiveGrid() {
 
     const ctx = canvas.getContext('2d', { alpha: true });
     if (!ctx) return;
+
+    /** offscreen alpha mask: opaque where the grid is allowed to show */
+    const maskCanvas = document.createElement('canvas');
+    const mctx = maskCanvas.getContext('2d');
+    if (!mctx) return;
 
     const motionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
     const hoverQuery = window.matchMedia('(hover: none)');
@@ -161,6 +172,10 @@ export function InteractiveGrid() {
       canvas.style.height = `${height}px`;
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
+      // the mask works in CSS px (drawImage scales it back up)
+      maskCanvas.width = Math.max(1, width);
+      maskCanvas.height = Math.max(1, height);
+
       if (width > 0 && height > 0 && desktopQuery.matches) {
         buildGrid();
         smooth.x = width / 2;
@@ -169,6 +184,38 @@ export function InteractiveGrid() {
       } else {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
       }
+    };
+
+    /**
+     * Keep the grid fully visible on the dark left half; on the light
+     * right half erase it except within `revealRadius` of the cursor
+     * (gated by effect strength, so it fades out when the pointer leaves).
+     */
+    const applyRevealMask = (withCursor: boolean) => {
+      const divideX = width * CONFIG.dividePosition;
+      mctx.clearRect(0, 0, width, height);
+
+      mctx.fillStyle = '#000';
+      mctx.fillRect(0, 0, divideX, height);
+
+      const feather = mctx.createLinearGradient(divideX, 0, divideX + CONFIG.revealBlend, 0);
+      feather.addColorStop(0, 'rgba(0, 0, 0, 1)');
+      feather.addColorStop(1, 'rgba(0, 0, 0, 0)');
+      mctx.fillStyle = feather;
+      mctx.fillRect(divideX, 0, CONFIG.revealBlend, height);
+
+      if (withCursor && smooth.strength > 0.01) {
+        const rr = CONFIG.revealRadius;
+        const reveal = mctx.createRadialGradient(smooth.x, smooth.y, 0, smooth.x, smooth.y, rr);
+        reveal.addColorStop(0, `rgba(0, 0, 0, ${smooth.strength})`);
+        reveal.addColorStop(1, 'rgba(0, 0, 0, 0)');
+        mctx.fillStyle = reveal;
+        mctx.fillRect(smooth.x - rr, smooth.y - rr, rr * 2, rr * 2);
+      }
+
+      ctx.globalCompositeOperation = 'destination-in';
+      ctx.drawImage(maskCanvas, 0, 0, width, height);
+      ctx.globalCompositeOperation = 'source-over';
     };
 
     /** Static, elegant grid for reduced-motion users. */
@@ -188,6 +235,7 @@ export function InteractiveGrid() {
         ctx.lineTo(width, y);
       }
       ctx.stroke();
+      applyRevealMask(false);
     };
 
     const frame = (now: number) => {
@@ -218,19 +266,6 @@ export function InteractiveGrid() {
       const R2 = R * R;
 
       ctx.clearRect(0, 0, width, height);
-
-      // ── cursor glow (cached sprite — one drawImage)
-      if (strength > 0.01) {
-        ctx.globalAlpha = strength;
-        ctx.drawImage(
-          glowSprite,
-          sx - CONFIG.glowRadius,
-          sy - CONFIG.glowRadius,
-          CONFIG.glowRadius * 2,
-          CONFIG.glowRadius * 2,
-        );
-        ctx.globalAlpha = 1;
-      }
 
       // ── integrate nodes: spring toward (drifting home + push-away offset)
       const pushing = strength > 0.01;
@@ -299,6 +334,23 @@ export function InteractiveGrid() {
           ctx.arc(n.x, n.y, 1 + n.heat * 1.6, 0, Math.PI * 2);
           ctx.fill();
         }
+      }
+
+      // ── reveal mask: hide the right-side grid except around the cursor
+      applyRevealMask(true);
+
+      // ── cursor glow, drawn on top so it isn't masked (a soft halo that
+      //    also signals the reveal on the light side)
+      if (strength > 0.01) {
+        ctx.globalAlpha = strength;
+        ctx.drawImage(
+          glowSprite,
+          sx - CONFIG.glowRadius,
+          sy - CONFIG.glowRadius,
+          CONFIG.glowRadius * 2,
+          CONFIG.glowRadius * 2,
+        );
+        ctx.globalAlpha = 1;
       }
     };
 
