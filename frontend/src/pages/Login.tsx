@@ -90,7 +90,7 @@ export function Login() {
           <h1 className="text-2xl font-bold text-gray-900 font-display">Welcome back</h1>
           <p className="text-sm text-gray-500 mt-1 mb-8">Sign in to your workspace.</p>
 
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-4" autoComplete="off">
             {error && (
               <div className="rounded-md bg-danger-50 border border-danger-100 px-3 py-2.5">
                 <p className="text-sm text-danger-700">{error}</p>
@@ -105,7 +105,7 @@ export function Login() {
                 id="email"
                 name="email"
                 type="email"
-                autoComplete="email"
+                autoComplete="off"
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
@@ -126,7 +126,7 @@ export function Login() {
                   id="password"
                   name="password"
                   type={showPassword ? 'text' : 'password'}
-                  autoComplete="current-password"
+                  autoComplete="new-password"
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
