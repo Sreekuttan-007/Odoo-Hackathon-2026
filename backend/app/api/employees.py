@@ -9,12 +9,13 @@ from app.models.job_position import JobPosition
 from app.models.working_schedule import WorkingSchedule
 from app.models.contract import Contract
 from app.models.attendance import Attendance
-from app.models.time_off import TimeOffRequest
+from app.models.time_off import TimeOffAllocation, TimeOffRequest
+from app.models.payroll import Payslip
 from app.models.user import User
 from app.schemas.employee import EmployeeResponse, EmployeeCreate, EmployeeUpdate, EmployeeMinimal
 from app.schemas.department import DepartmentResponse
 from app.schemas.job_position import JobPositionResponse
-from app.api.deps import get_current_user, get_current_hr, HR_CAPABLE_ROLES
+from app.api.deps import get_current_user, get_current_hr, get_current_admin, HR_CAPABLE_ROLES
 from app.services.schedule_calculator import build_schedule_summary
 
 router = APIRouter()
@@ -231,3 +232,51 @@ def update_employee(
     db.commit()
     db.refresh(employee)
     return _to_response(db, employee)
+
+
+@router.delete("/employees/{employee_id}", status_code=204)
+def delete_employee(
+    employee_id: int,
+    db: Session = Depends(get_db),
+    current_admin: User = Depends(get_current_admin),
+):
+    employee = db.query(Employee).filter(Employee.id == employee_id).first()
+    if not employee:
+        raise HTTPException(404, detail={"error": {"code": "NOT_FOUND", "message": "Employee not found."}})
+
+    # Payroll history (contracts, attendance, payslips, time off, a linked
+    # login) must never silently disappear — that's the same "historical
+    # integrity" guarantee the payroll engine relies on elsewhere. An
+    # employee with any real activity can only be deactivated, not deleted;
+    # a genuinely blank record (created by mistake, nothing recorded yet)
+    # can be removed outright.
+    blockers = []
+    if db.query(Contract).filter(Contract.employee_id == employee_id).first():
+        blockers.append("contracts")
+    if db.query(Attendance).filter(Attendance.employee_id == employee_id).first():
+        blockers.append("attendance records")
+    if db.query(TimeOffAllocation).filter(TimeOffAllocation.employee_id == employee_id).first():
+        blockers.append("time off allocations")
+    if db.query(TimeOffRequest).filter(TimeOffRequest.employee_id == employee_id).first():
+        blockers.append("time off requests")
+    if db.query(Payslip).filter(Payslip.employee_id == employee_id).first():
+        blockers.append("payslips")
+    if db.query(User).filter(User.employee_id == employee_id).first():
+        blockers.append("a linked user account")
+    if db.query(Employee).filter(Employee.manager_id == employee_id).first():
+        blockers.append("direct reports who list them as manager")
+
+    if blockers:
+        raise HTTPException(409, detail={
+            "error": {
+                "code": "EMPLOYEE_HAS_HISTORY",
+                "message": (
+                    f"{employee.first_name} {employee.last_name} has existing "
+                    f"{', '.join(blockers)} and can't be permanently deleted. "
+                    "Set their status to Inactive instead to preserve historical records."
+                ),
+            }
+        })
+
+    db.delete(employee)
+    db.commit()

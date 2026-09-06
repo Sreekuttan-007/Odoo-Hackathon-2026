@@ -1,5 +1,5 @@
-import { useState, useEffect, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import api from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 import type { Employee, Department } from '../types';
@@ -19,6 +19,7 @@ type ViewMode = 'kanban' | 'list';
 export function Employees() {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const { toasts, push } = useToast();
   const canManage = !!user && HR_ROLES.includes(user.role);
 
@@ -34,6 +35,21 @@ export function Employees() {
   useEffect(() => {
     localStorage.setItem('employees.view', view);
   }, [view]);
+
+  // Cross-page success feedback (e.g. from deleting an employee on their
+  // detail page, which unmounts before its own toast could render) arrives
+  // via router state; show it once, then clear it so back/refresh doesn't
+  // replay it. The consumed-key ref (rather than relying on the state clear
+  // alone) also guards against StrictMode's dev-only double effect-invoke.
+  const consumedToastKey = useRef<string | null>(null);
+  useEffect(() => {
+    const toastMessage = (location.state as { toast?: string } | null)?.toast;
+    if (toastMessage && consumedToastKey.current !== location.key) {
+      consumedToastKey.current = location.key ?? null;
+      push(toastMessage);
+      navigate(location.pathname, { replace: true, state: {} });
+    }
+  }, [location, navigate, push]);
 
   useEffect(() => {
     api.get('/departments').then(res => setDepartments(res.data));

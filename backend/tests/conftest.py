@@ -69,6 +69,14 @@ def hr_token(client, db_session):
 
 
 @pytest.fixture()
+def admin_token(client, db_session):
+    email = _make_user(db_session, Role.ADMIN, "admin-test@payloom.local")
+    res = client.post("/api/auth/login", json={"email": email, "password": "password123"})
+    assert res.status_code == 200, res.text
+    return res.json()["access_token"]
+
+
+@pytest.fixture()
 def employee_token(client, db_session):
     email = _make_user(db_session, Role.EMPLOYEE, "employee-test@payloom.local")
     res = client.post("/api/auth/login", json={"email": email, "password": "password123"})

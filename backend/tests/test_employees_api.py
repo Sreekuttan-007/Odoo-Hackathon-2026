@@ -121,3 +121,52 @@ def test_rbac_employee_role_can_read_employees(client, employee_token):
 def test_rbac_unauthenticated_rejected(client):
     res = client.get("/api/employees")
     assert res.status_code == 401
+
+
+def test_admin_can_delete_employee_with_no_history(client, admin_token):
+    res = client.post("/api/employees", json={"first_name": "Blank", "last_name": "Record"}, headers=auth_headers(admin_token))
+    emp_id = res.json()["id"]
+
+    res = client.delete(f"/api/employees/{emp_id}", headers=auth_headers(admin_token))
+    assert res.status_code == 204
+
+    res = client.get(f"/api/employees/{emp_id}", headers=auth_headers(admin_token))
+    assert res.status_code == 404
+
+
+def test_hr_manager_cannot_delete_employee(client, hr_token):
+    res = client.post("/api/employees", json={"first_name": "Blank", "last_name": "Record"}, headers=auth_headers(hr_token))
+    emp_id = res.json()["id"]
+
+    res = client.delete(f"/api/employees/{emp_id}", headers=auth_headers(hr_token))
+    assert res.status_code == 403
+
+
+def test_delete_rejects_employee_with_contract_history(client, admin_token):
+    dept_id = _create_department(client, admin_token)
+    pos_id = _create_job_position(client, admin_token)
+    res = client.post(
+        "/api/employees",
+        json={"first_name": "Has", "last_name": "History", "department_id": dept_id, "job_position_id": pos_id},
+        headers=auth_headers(admin_token),
+    )
+    emp_id = res.json()["id"]
+    res = client.post(
+        "/api/contracts",
+        json={"employee_id": emp_id, "start_date": "2026-01-01", "wage_monthly": 50000, "department_id": dept_id, "job_position_id": pos_id},
+        headers=auth_headers(admin_token),
+    )
+    assert res.status_code == 200, res.text
+
+    res = client.delete(f"/api/employees/{emp_id}", headers=auth_headers(admin_token))
+    assert res.status_code == 409
+    assert res.json()["detail"]["error"]["code"] == "EMPLOYEE_HAS_HISTORY"
+
+    # the employee and their contract are untouched
+    res = client.get(f"/api/employees/{emp_id}", headers=auth_headers(admin_token))
+    assert res.status_code == 200
+
+
+def test_delete_unknown_employee_404s(client, admin_token):
+    res = client.delete("/api/employees/999999", headers=auth_headers(admin_token))
+    assert res.status_code == 404

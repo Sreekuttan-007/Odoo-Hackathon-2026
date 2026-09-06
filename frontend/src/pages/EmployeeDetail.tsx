@@ -10,9 +10,10 @@ import { Button } from '../components/ui/Button';
 import { SectionCard } from '../components/ui/SectionCard';
 import { DetailField } from '../components/ui/DetailField';
 import { SkeletonDetail } from '../components/ui/Skeleton';
+import { ConfirmDialog } from '../components/ui/ConfirmDialog';
 import {
   ArrowLeft, Edit2, Mail, MapPin, Building2, Briefcase, UserCircle2, Clock,
-  FileText, CalendarClock, PlaneTakeoff, Lock,
+  FileText, CalendarClock, PlaneTakeoff, Lock, Trash2,
 } from 'lucide-react';
 
 const HR_ROLES = ['HR_MANAGER', 'HR_PAYROLL_USER', 'HR_PAYROLL_MANAGER', 'ADMIN'];
@@ -23,12 +24,16 @@ export function EmployeeDetail() {
   const { user } = useAuth();
   const { toasts, push } = useToast();
   const canManage = !!user && HR_ROLES.includes(user.role);
+  const canDelete = user?.role === 'ADMIN';
 
   const [employee, setEmployee] = useState<Employee | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [tab, setTab] = useState<'work' | 'private'>('work');
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState('');
 
   const fetchEmployee = () => {
     setLoading(true);
@@ -40,6 +45,20 @@ export function EmployeeDetail() {
   };
 
   useEffect(fetchEmployee, [employeeId]);
+
+  const handleDelete = async () => {
+    setDeleting(true);
+    setDeleteError('');
+    try {
+      await api.delete(`/employees/${employeeId}`);
+      navigate('/employees', { state: { toast: 'Employee removed.' } });
+    } catch (err: any) {
+      setConfirmingDelete(false);
+      setDeleteError(err.response?.data?.detail?.error?.message || 'Failed to remove this employee.');
+    } finally {
+      setDeleting(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -66,6 +85,12 @@ export function EmployeeDetail() {
         <ArrowLeft className="w-3.5 h-3.5" /> Back to Employees
       </button>
 
+      {deleteError && (
+        <div className="text-sm text-danger-700 bg-danger-50 border border-danger-100 p-3 rounded-md">
+          {deleteError}
+        </div>
+      )}
+
       <SectionCard>
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="flex items-center gap-4">
@@ -81,11 +106,18 @@ export function EmployeeDetail() {
               </div>
             </div>
           </div>
-          {canManage && (
-            <Button variant="secondary" size="sm" className="self-start" onClick={() => setIsEditOpen(true)}>
-              <Edit2 className="w-3.5 h-3.5" /> Edit
-            </Button>
-          )}
+          <div className="flex items-center gap-2 self-start">
+            {canManage && (
+              <Button variant="secondary" size="sm" onClick={() => setIsEditOpen(true)}>
+                <Edit2 className="w-3.5 h-3.5" /> Edit
+              </Button>
+            )}
+            {canDelete && (
+              <Button variant="destructive" size="sm" onClick={() => setConfirmingDelete(true)}>
+                <Trash2 className="w-3.5 h-3.5" /> Remove
+              </Button>
+            )}
+          </div>
         </div>
 
         {/* Smart actions */}
@@ -149,6 +181,16 @@ export function EmployeeDetail() {
         onClose={() => setIsEditOpen(false)}
         employee={employee}
         onSaved={(updated) => { setEmployee(updated); push('Employee updated.'); }}
+      />
+      <ConfirmDialog
+        isOpen={confirmingDelete}
+        title="Remove this employee?"
+        message={`This permanently deletes ${employee.first_name} ${employee.last_name}'s record. It only succeeds if they have no contracts, attendance, payslips, time off, or a linked login — if they have any history, set their status to Inactive instead.\n\nDo you wish to proceed?`}
+        confirmLabel="Remove"
+        cancelLabel="Cancel"
+        loading={deleting}
+        onConfirm={handleDelete}
+        onCancel={() => setConfirmingDelete(false)}
       />
       <ToastViewport toasts={toasts} />
     </div>
