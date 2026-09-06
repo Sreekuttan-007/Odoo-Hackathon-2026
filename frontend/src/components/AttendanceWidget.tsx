@@ -3,6 +3,7 @@ import api from '../services/api';
 import type { CurrentAttendance } from '../types';
 import { formatTime, formatMinutes } from '../lib/format';
 import { Button } from './ui/Button';
+import { ConfirmDialog } from './ui/ConfirmDialog';
 import { Clock, LogIn, LogOut, AlertCircle } from 'lucide-react';
 
 export function AttendanceWidget() {
@@ -11,6 +12,7 @@ export function AttendanceWidget() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [now, setNow] = useState(() => Date.now());
+  const [confirmingCheckOut, setConfirmingCheckOut] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
   const refresh = useCallback(() => {
@@ -29,11 +31,15 @@ export function AttendanceWidget() {
 
   useEffect(() => {
     const handleClick = (e: MouseEvent) => {
+      // The confirm dialog portals to document.body, outside this popover's
+      // own container — ignore outside-clicks while it's open so cancelling
+      // the check-out doesn't also collapse the popover underneath it.
+      if (confirmingCheckOut) return;
       if (containerRef.current && !containerRef.current.contains(e.target as Node)) setOpen(false);
     };
     document.addEventListener('mousedown', handleClick);
     return () => document.removeEventListener('mousedown', handleClick);
-  }, []);
+  }, [confirmingCheckOut]);
 
   const handleCheckIn = async () => {
     setLoading(true);
@@ -48,7 +54,7 @@ export function AttendanceWidget() {
     }
   };
 
-  const handleCheckOut = async () => {
+  const confirmCheckOut = async () => {
     setLoading(true);
     setError('');
     try {
@@ -58,6 +64,7 @@ export function AttendanceWidget() {
       setError(err.response?.data?.detail?.error?.message || 'Failed to check out.');
     } finally {
       setLoading(false);
+      setConfirmingCheckOut(false);
     }
   };
 
@@ -103,7 +110,7 @@ export function AttendanceWidget() {
                 <Clock className="w-3.5 h-3.5 text-gray-400" />
                 Elapsed: <span className="font-semibold text-gray-900">{formatMinutes(elapsed)}</span>
               </div>
-              <Button variant="secondary" className="w-full" loading={loading} onClick={handleCheckOut}>
+              <Button variant="secondary" className="w-full" loading={loading} onClick={() => setConfirmingCheckOut(true)}>
                 <LogOut className="w-3.5 h-3.5" /> Check Out
               </Button>
             </div>
@@ -117,6 +124,17 @@ export function AttendanceWidget() {
           )}
         </div>
       )}
+
+      <ConfirmDialog
+        isOpen={confirmingCheckOut}
+        title="End today's work session?"
+        message={`You've been checked in for ${formatMinutes(elapsed)}. Checking out now closes today's session — a mis-click here can leave too little worked time for the day to be paid.\n\nDo you wish to proceed?`}
+        confirmLabel="Check out"
+        cancelLabel="Stay checked in"
+        loading={loading}
+        onConfirm={confirmCheckOut}
+        onCancel={() => setConfirmingCheckOut(false)}
+      />
     </div>
   );
 }
