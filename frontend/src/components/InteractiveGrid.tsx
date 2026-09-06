@@ -42,8 +42,10 @@ const CONFIG = {
   pointerEase: 0.18,
   /** easing of the overall effect strength (fade in / out) */
   strengthEase: 0.08,
+  /** min viewport width at which the grid runs (below = mobile, dormant) */
+  minWidth: 1024,
   /** resting alpha of the grid lines */
-  lineOpacity: 0.12,
+  lineOpacity: 0.15,
   /** alpha of the lines / dots closest to the cursor */
   lineOpacityHot: 0.5,
   /** heat above which a segment / node is drawn "hot" */
@@ -91,6 +93,7 @@ export function InteractiveGrid() {
 
     const motionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
     const hoverQuery = window.matchMedia('(hover: none)');
+    const desktopQuery = window.matchMedia(`(min-width: ${CONFIG.minWidth}px)`);
 
     let width = 0;
     let height = 0;
@@ -158,11 +161,13 @@ export function InteractiveGrid() {
       canvas.style.height = `${height}px`;
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
-      if (width > 0 && height > 0) {
+      if (width > 0 && height > 0 && desktopQuery.matches) {
         buildGrid();
         smooth.x = width / 2;
         smooth.y = height / 2;
         if (motionQuery.matches) drawStatic();
+      } else {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
       }
     };
 
@@ -187,7 +192,7 @@ export function InteractiveGrid() {
 
     const frame = (now: number) => {
       rafId = requestAnimationFrame(frame);
-      if (width === 0 || height === 0) return;
+      if (width === 0 || height === 0 || !desktopQuery.matches) return;
 
       const t = now - startTime;
       const auto = hoverQuery.matches;
@@ -342,8 +347,13 @@ export function InteractiveGrid() {
     const onHoverChange = () => {
       pointer.active = false;
     };
+    const onDesktopChange = () => {
+      pointer.active = false;
+      resize();
+    };
     motionQuery.addEventListener('change', applyMotionPreference);
     hoverQuery.addEventListener('change', onHoverChange);
+    desktopQuery.addEventListener('change', onDesktopChange);
 
     return () => {
       stop();
@@ -352,6 +362,7 @@ export function InteractiveGrid() {
       panel.removeEventListener('pointerleave', onPointerLeave);
       motionQuery.removeEventListener('change', applyMotionPreference);
       hoverQuery.removeEventListener('change', onHoverChange);
+      desktopQuery.removeEventListener('change', onDesktopChange);
     };
   }, []);
 

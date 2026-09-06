@@ -41,10 +41,13 @@ export function Login() {
   };
 
   return (
-    <div className="min-h-screen flex bg-white">
+    <div className="auth-shell relative min-h-screen flex bg-[#0a0e0c]">
+      {/* One grid spans the whole page so the cursor carries it seamlessly
+          from the dark panel across to the form. */}
+      <InteractiveGrid />
+
       {/* Brand panel */}
-      <div className="auth-stage hidden lg:flex lg:w-1/2 flex-col justify-between p-12">
-        <InteractiveGrid />
+      <div className="auth-stage relative z-10 hidden lg:flex lg:w-1/2 flex-col justify-between p-12">
         <div className="auth-vignette" aria-hidden="true" />
 
         <div className="relative flex items-center gap-2.5">
@@ -66,8 +69,9 @@ export function Login() {
         <p className="relative text-xs text-gray-500">© 2026 Payloom</p>
       </div>
 
-      {/* Form panel */}
-      <div className="flex flex-1 items-center justify-center px-6 py-12">
+      {/* Form panel — light surface that contrasts the dark left while the
+          same grid stays faintly visible through it on desktop. */}
+      <div className="relative z-10 flex flex-1 items-center justify-center px-6 py-12 max-lg:bg-white lg:bg-gradient-to-r lg:from-white/55 lg:via-white/92 lg:to-white lg:border-l lg:border-white/10">
         <div className="w-full max-w-sm">
           <div className="lg:hidden flex items-center gap-2.5 mb-10">
             <div className="h-7 w-7 rounded-lg bg-brand-600 flex items-center justify-center">
@@ -98,7 +102,7 @@ export function Login() {
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="block w-full h-10 px-3.5 rounded-lg border border-gray-300 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-500"
+                className="block w-full h-10 px-3.5 rounded-lg border border-gray-300 bg-white text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-500"
                 placeholder="you@company.com"
                 disabled={loading}
               />
@@ -119,7 +123,7 @@ export function Login() {
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="block w-full h-10 px-3.5 pr-10 rounded-lg border border-gray-300 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-500"
+                  className="block w-full h-10 px-3.5 pr-10 rounded-lg border border-gray-300 bg-white text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-500"
                   disabled={loading}
                 />
                 <button

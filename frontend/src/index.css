@@ -215,25 +215,30 @@ tbody tr:hover {
 }
 
 /* ─────────────────────────────────────────────────────────────────────
-   Login brand panel. The dark black→emerald gradient plus a depth
-   vignette; the reactive grid itself is drawn on a <canvas> by
-   <InteractiveGrid />.
+   Login page. A single reactive grid <canvas> (<InteractiveGrid />)
+   spans the whole shell; the dark left panel and the light form panel
+   both sit above it, so the cursor carries the same grid seamlessly
+   across the divide.
    ──────────────────────────────────────────────────────────────────── */
-.auth-stage {
-  position: relative;
-  isolation: isolate;
-  overflow: hidden;
+.auth-shell {
   background:
     radial-gradient(115% 90% at 0% 100%, rgb(20 122 92 / 0.4), transparent 55%),
     radial-gradient(80% 60% at 100% 0%, rgb(14 127 122 / 0.28), transparent 60%),
     #0a0e0c;
+}
+
+/* dark brand panel — translucent so the shared grid shows through */
+.auth-stage {
+  isolation: isolate;
+  overflow: hidden;
+  background: rgb(9 13 11 / 0.4);
 }
 .auth-stage > * {
   position: relative;
   z-index: 1;
 }
 
-/* reactive grid canvas (drawn by <InteractiveGrid />) */
+/* reactive grid canvas (drawn by <InteractiveGrid />) — full shell */
 .auth-grid-canvas {
   position: absolute;
   inset: 0;
