@@ -190,9 +190,9 @@ export function Dashboard() {
         </div>
       )}
 
-      <div className="grid gap-6 xl:grid-cols-[1.15fr_0.85fr]">
-        <section className="bezel">
-        <div className="bezel-core">
+      <div className="grid items-stretch gap-6 xl:grid-cols-[1.15fr_0.85fr]">
+        <section className="bezel flex flex-col">
+        <div className="bezel-core flex flex-1 flex-col">
           <div className="flex items-center justify-between border-b border-gray-100 px-5 py-4">
             <div>
               <h2 className="font-semibold text-gray-900 font-display">Pending time-off requests</h2>
@@ -202,10 +202,10 @@ export function Dashboard() {
               See all <ArrowRight className="h-4 w-4" />
             </Link>
           </div>
-          <div className="divide-y divide-gray-100">
+          <div className="flex flex-1 flex-col divide-y divide-gray-100">
             {recentRequests.length === 0 ? (
-              <div className="px-5 py-10 text-center">
-                <CheckCircle2 className="mx-auto h-8 w-8 text-brand-500" />
+              <div className="flex flex-1 flex-col items-center justify-center px-5 py-12 text-center">
+                <CheckCircle2 className="h-8 w-8 text-brand-500" />
                 <p className="mt-3 text-sm font-medium text-gray-900">Nothing needs review</p>
                 <p className="mt-1 text-sm text-gray-500">New requests will appear here.</p>
               </div>
@@ -230,13 +230,13 @@ export function Dashboard() {
         </div>
         </section>
 
-        <section className="bezel">
-        <div className="bezel-core">
+        <section className="bezel flex flex-col">
+        <div className="bezel-core flex flex-1 flex-col">
           <div className="border-b border-gray-100 px-5 py-4">
             <h2 className="font-semibold text-gray-900 font-display">Workforce by department</h2>
             <p className="mt-1 text-sm text-gray-500">Active employees grouped by organization.</p>
           </div>
-          <div className="space-y-4 p-5">
+          <div className="flex-1 space-y-4 p-5">
             {departmentCounts.length === 0 ? (
               <p className="py-6 text-center text-sm text-gray-500">No department data available.</p>
             ) : departmentCounts.map(department => {
